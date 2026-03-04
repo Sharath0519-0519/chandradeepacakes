@@ -1,0 +1,3274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chandradeepa Home Made Cakes</title>
+
+<!-- Firebase SDKs -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, query, orderBy, updateDoc, deleteDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ════════════════════════════════════════════════════════
+// PASTE YOUR FIREBASE CONFIG HERE (from Firebase Console)
+// ════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyAylnQ1vj7P3AyJp0q5sgrvrsbrNYs2Y0E",
+  authDomain: "chandradeepa-cakes-28805.firebaseapp.com",
+  projectId: "chandradeepa-cakes-28805",
+  storageBucket: "chandradeepa-cakes-28805.firebasestorage.app",
+  messagingSenderId: "11121587027",
+  appId: "1:11121587027:web:6cbd4a1e509d741bf327a6"
+};
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+window._fb = { auth, db, GoogleAuthProvider, signInWithPopup, signOut,
+  collection, doc, setDoc, getDoc, getDocs, addDoc, query, orderBy, updateDoc, deleteDoc };
+
+window.dispatchEvent(new Event('fbReady'));
+auth.onAuthStateChanged(function(user){
+  if(typeof state==='undefined') return;
+  if(user&&!state.currentUser){state.currentUser={name:user.displayName||user.email,email:user.email,photo:user.photoURL||'',isAdmin:false};if(typeof updateUserUI==='function')updateUserUI();}
+  else if(!user&&state.currentUser&&!state.currentUser.isAdmin){state.currentUser=null;if(typeof updateUserUI==='function')updateUserUI();}
+});
+</script>
+<!-- Razorpay -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════
+   RESET + VARIABLES
+═══════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --cream:#faf6f0; --cream2:#f5ede0; --cream3:#ede0cc;
+  --rose:#c4756a;  --rose2:#d4897e;  --rose3:#f0cec6; --rose-dark:#8b4a41;
+  --brown:#5c3d2e; --brown2:#7a5240; --brown3:#a67c6a;
+  --gold:#c9a84c;
+  --text:#2d1f17;  --text2:#5c3d2e;  --text3:#8a6a58;
+  --white:#fff;
+  --shadow:0 4px 20px rgba(92,61,46,0.12);
+  --shadow2:0 12px 48px rgba(92,61,46,0.2);
+}
+html{scroll-behavior:smooth;}
+body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.6;min-height:100vh;}
+
+/* ═══════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════ */
+.hidden{display:none!important;}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 26px;border:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;letter-spacing:.04em;cursor:pointer;transition:all .25s;text-decoration:none;}
+.btn-primary{background:var(--brown);color:var(--cream);} .btn-primary:hover{background:var(--rose-dark);}
+.btn-rose{background:var(--rose);color:#fff;} .btn-rose:hover{background:var(--rose-dark);}
+.btn-outline{background:transparent;border:1.5px solid var(--brown);color:var(--brown);} .btn-outline:hover{background:var(--brown);color:var(--cream);}
+.btn-gold{background:var(--gold);color:#fff;} .btn-gold:hover{background:var(--rose-dark);}
+.btn-danger{background:#c0392b;color:#fff;} .btn-danger:hover{background:#a93226;}
+.btn-sm{padding:7px 16px;font-size:12px;}
+.btn-lg{padding:16px 36px;font-size:16px;}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--brown2);margin-bottom:7px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:11px 14px;border:1.5px solid var(--cream3);background:var(--white);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--rose);}
+.form-group textarea{resize:vertical;min-height:70px;}
+
+/* ═══════════════════════════════════════
+   TOAST
+═══════════════════════════════════════ */
+#toastBox{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--brown);color:#fff;padding:12px 20px;font-size:13px;font-weight:500;box-shadow:var(--shadow2);animation:toastIn .3s ease;max-width:320px;}
+@keyframes toastIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* ═══════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════ */
+nav{position:sticky;top:0;z-index:200;background:rgba(250,246,240,.97);backdrop-filter:blur(8px);border-bottom:1px solid var(--cream3);}
+.nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:70px;display:flex;align-items:center;gap:20px;}
+/* LOGO */
+.nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none;cursor:pointer;}
+.nav-logo-icon{width:46px;height:46px;background:linear-gradient(135deg,var(--rose),var(--brown));display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:hidden;}
+.nav-logo-icon::before{content:'';position:absolute;width:32px;height:32px;border:2px solid rgba(255,255,255,.3);border-radius:50%;}
+.nav-logo-icon span{font-size:22px;position:relative;z-index:1;}
+.nav-logo-text{display:flex;flex-direction:column;line-height:1.1;}
+.nav-logo-name{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:700;color:var(--brown);letter-spacing:.02em;}
+.nav-logo-sub{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);font-weight:500;}
+.nav-links{display:flex;gap:4px;margin-left:24px;}
+.nav-link{padding:8px 14px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;}
+.nav-link:hover,.nav-link.active{color:var(--rose);border-bottom-color:var(--rose);}
+.nav-spacer{flex:1;}
+#userArea{display:flex;align-items:center;gap:12px;}
+.user-pill{display:flex;align-items:center;gap:8px;padding:7px 14px;border:1.5px solid var(--cream3);cursor:pointer;font-size:13px;font-weight:500;color:var(--brown);background:var(--white);transition:all .2s;}
+.user-pill:hover{border-color:var(--rose);color:var(--rose);}
+.user-avatar{width:28px;height:28px;background:var(--rose);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;border-radius:50%;}
+.cart-btn{position:relative;padding:10px 16px;background:var(--brown);color:#fff;cursor:pointer;border:none;font-size:18px;transition:background .2s;}
+.cart-btn:hover{background:var(--rose);}
+.cart-badge{position:absolute;top:-4px;right:-4px;background:var(--gold);color:#fff;font-size:10px;font-weight:700;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+
+/* ═══════════════════════════════════════
+   PAGES
+═══════════════════════════════════════ */
+.page{display:none;}
+.page.active{display:block;}
+
+/* ═══════════════════════════════════════
+   HERO
+═══════════════════════════════════════ */
+.hero{background:linear-gradient(150deg,var(--cream) 0%,var(--cream2) 50%,var(--cream3) 100%);padding:80px 24px;position:relative;overflow:hidden;}
+.hero::before{content:'🎂';position:absolute;right:-30px;top:-20px;font-size:260px;opacity:.05;transform:rotate(-15deg);}
+.hero-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;}
+.hero-eyebrow{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--rose);font-weight:600;margin-bottom:16px;}
+.hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(38px,5vw,64px);font-weight:700;color:var(--brown);line-height:1.05;margin-bottom:20px;}
+.hero-title em{color:var(--rose);font-style:italic;}
+.hero-sub{font-size:16px;color:var(--text3);line-height:1.8;margin-bottom:32px;max-width:440px;}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap;}
+.hero-visual{display:flex;flex-direction:column;gap:14px;}
+.hero-card{background:var(--white);padding:20px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;transition:transform .3s;}
+.hero-card:hover{transform:translateX(6px);}
+.hero-card-icon{font-size:32px;width:56px;height:56px;background:var(--cream2);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.hero-card-text{font-size:13px;color:var(--text3);line-height:1.6;}
+.hero-card-text strong{display:block;font-size:14px;color:var(--brown);font-weight:600;margin-bottom:2px;}
+@media(max-width:768px){.hero-inner{grid-template-columns:1fr;}.hero-visual{display:none;}}
+
+/* ═══════════════════════════════════════
+   SECTION HEADER
+═══════════════════════════════════════ */
+.section-header{text-align:center;padding:56px 24px 32px;}
+.section-eyebrow{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--rose);font-weight:600;margin-bottom:10px;}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:clamp(28px,4vw,44px);font-weight:700;color:var(--brown);margin-bottom:12px;}
+.section-sub{font-size:15px;color:var(--text3);max-width:500px;margin:0 auto;}
+
+/* ═══════════════════════════════════════
+   CATEGORY CARDS
+═══════════════════════════════════════ */
+.cat-grid{max-width:1200px;margin:0 auto;padding:0 24px 60px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+@media(max-width:900px){.cat-grid{grid-template-columns:1fr;}}
+.cat-card{position:relative;padding:36px 28px;cursor:pointer;overflow:hidden;transition:transform .3s,box-shadow .3s;}
+.cat-card:hover{transform:translateY(-6px);box-shadow:var(--shadow2);}
+.cat-card-bg{position:absolute;inset:0;z-index:0;}
+.cat-card.birthday .cat-card-bg{background:linear-gradient(135deg,#fff5f0 0%,#fce4dc 100%);}
+.cat-card.wedding .cat-card-bg{background:linear-gradient(135deg,#f5f0ff 0%,#e8dfff 100%);}
+.cat-card.step .cat-card-bg{background:linear-gradient(135deg,#f0fff5 0%,#d4f0de 100%);}
+.cat-card-ribbon{position:absolute;top:16px;right:16px;z-index:2;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;}
+.cat-card.birthday .cat-card-ribbon{background:var(--rose);color:#fff;}
+.cat-card.wedding .cat-card-ribbon{background:#7c5cbf;color:#fff;}
+.cat-card.step .cat-card-ribbon{background:#2d8a56;color:#fff;}
+.cat-card-inner{position:relative;z-index:1;}
+.cat-card-emoji{font-size:52px;margin-bottom:16px;display:block;}
+.cat-card-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--brown);margin-bottom:8px;line-height:1.2;}
+.cat-card-sub{font-size:13px;color:var(--text3);line-height:1.7;margin-bottom:16px;}
+.cat-card-count{font-size:12px;font-weight:600;color:var(--rose);letter-spacing:.05em;}
+.cat-card-arrow{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--brown);margin-top:12px;transition:gap .2s;}
+.cat-card:hover .cat-card-arrow{gap:12px;}
+
+/* ═══════════════════════════════════════
+   PRODUCT GRID & CARDS
+═══════════════════════════════════════ */
+.product-grid{max-width:1200px;margin:0 auto;padding:0 24px 60px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px;}
+.product-card{background:var(--white);border:1px solid var(--cream3);cursor:pointer;overflow:hidden;transition:transform .3s,box-shadow .3s;}
+.product-card:hover{transform:translateY(-4px);box-shadow:var(--shadow2);}
+.product-card-img{height:200px;display:flex;align-items:center;justify-content:center;background:var(--cream2);position:relative;overflow:hidden;}
+.product-card-img img{width:100%;height:100%;object-fit:cover;}
+.product-card-img-placeholder{font-size:72px;opacity:.7;}
+.product-badge{position:absolute;top:12px;left:12px;background:var(--rose);color:#fff;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;}
+.product-card-body{padding:18px;}
+.product-card-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--brown);margin-bottom:4px;}
+.product-card-meta{font-size:12px;color:var(--text3);margin-bottom:10px;}
+.product-card-price{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--rose);}
+.product-card-footer{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-top:1px solid var(--cream3);}
+
+/* ═══════════════════════════════════════
+   CATEGORY PAGE
+═══════════════════════════════════════ */
+.cat-page-header{background:linear-gradient(120deg,var(--cream2),var(--cream3));padding:48px 24px 32px;text-align:center;border-bottom:1px solid var(--cream3);}
+.cat-page-back{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--text3);cursor:pointer;margin-bottom:16px;transition:color .2s;}
+.cat-page-back:hover{color:var(--rose);}
+.cat-page-emoji{font-size:56px;display:block;margin-bottom:10px;}
+.cat-page-title{font-family:'Cormorant Garamond',serif;font-size:clamp(28px,4vw,44px);font-weight:700;color:var(--brown);margin-bottom:8px;}
+.cat-page-sub{font-size:14px;color:var(--text3);}
+
+/* ═══════════════════════════════════════
+   CART SIDEBAR
+═══════════════════════════════════════ */
+.cart-sidebar{position:fixed;top:0;right:0;width:360px;height:100%;background:var(--white);box-shadow:-8px 0 32px rgba(0,0,0,.15);z-index:500;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;}
+.cart-sidebar.open{transform:translateX(0);}
+.cart-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:499;opacity:0;pointer-events:none;transition:opacity .35s;}
+.cart-overlay.open{opacity:1;pointer-events:all;}
+.cart-header{display:flex;align-items:center;justify-content:space-between;padding:20px 22px;border-bottom:1px solid var(--cream3);}
+.cart-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--brown);}
+.cart-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);padding:4px;}
+.cart-items{flex:1;overflow-y:auto;padding:16px 22px;}
+.empty-cart{text-align:center;padding:60px 20px;color:var(--text3);}
+.empty-cart-icon{font-size:56px;margin-bottom:12px;opacity:.5;}
+.cart-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--cream3);}
+.cart-item-img{width:52px;height:52px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;overflow:hidden;}
+.cart-item-img img{width:100%;height:100%;object-fit:cover;}
+.cart-item-info{flex:1;}
+.cart-item-name{font-weight:600;font-size:13px;color:var(--brown);}
+.cart-item-meta{font-size:11px;color:var(--text3);}
+.cart-item-price{font-size:14px;font-weight:600;color:var(--rose);}
+.cart-item-remove{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:4px;}
+.cart-footer{padding:18px 22px;border-top:1px solid var(--cream3);}
+.cart-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;}
+.cart-total span:first-child{font-size:14px;color:var(--text3);}
+.cart-total span:last-child{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--rose);}
+
+/* ═══════════════════════════════════════
+   MODALS
+═══════════════════════════════════════ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;}
+.modal{background:var(--white);width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;box-shadow:var(--shadow2);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--cream3);}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--brown);}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3);}
+.modal-body{padding:24px;overflow-y:auto;}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--cream3);display:flex;gap:10px;justify-content:flex-end;}
+
+/* ═══════════════════════════════════════
+   PRODUCT DETAIL MODAL
+═══════════════════════════════════════ */
+.product-img-large{height:240px;display:flex;align-items:center;justify-content:center;background:var(--cream2);font-size:100px;margin:-24px -24px 20px;overflow:hidden;}
+.product-img-large img{width:100%;height:100%;object-fit:cover;}
+.variant-opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.variant-opt{padding:7px 14px;border:1.5px solid var(--cream3);background:var(--white);cursor:pointer;font-size:13px;font-weight:500;color:var(--brown);transition:all .2s;}
+.variant-opt:hover{border-color:var(--rose);}
+.variant-opt.selected{border-color:var(--rose);background:var(--rose3);color:var(--rose-dark);}
+.qty-row{display:flex;align-items:center;gap:14px;margin-top:8px;}
+.qty-btn{width:34px;height:34px;border:1.5px solid var(--cream3);background:var(--white);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.qty-btn:hover{border-color:var(--rose);color:var(--rose);}
+#pmQty{font-size:18px;font-weight:700;min-width:30px;text-align:center;}
+#pmPrice{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--rose);}
+
+/* ═══════════════════════════════════════
+   AUTH
+═══════════════════════════════════════ */
+.auth-page{max-width:440px;margin:48px auto;padding:0 24px 80px;}
+.auth-box{background:var(--white);border:1px solid var(--cream3);padding:32px;}
+.auth-logo{text-align:center;margin-bottom:28px;}
+.auth-logo span{font-size:40px;}
+.auth-logo-name{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--brown);margin-top:8px;}
+.auth-steps{display:flex;justify-content:center;gap:8px;margin-bottom:28px;}
+.auth-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--cream3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text3);transition:all .3s;}
+.auth-dot.active{border-color:var(--rose);background:var(--rose);color:#fff;}
+.auth-dot.done{border-color:var(--rose);background:var(--rose3);color:var(--rose);}
+.otp-boxes{display:flex;gap:10px;justify-content:center;margin:16px 0;}
+.otp-input{width:48px;height:54px;border:2px solid var(--cream3);text-align:center;font-size:22px;font-weight:700;font-family:'Cormorant Garamond',serif;color:var(--brown);outline:none;transition:border-color .2s;}
+.otp-input:focus{border-color:var(--rose);}
+.otp-input.filled{border-color:var(--rose);background:var(--rose3);}
+.otp-input.error{border-color:#c0392b;background:#fdecea;animation:shake .4s;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pass-wrap{position:relative;}
+.pass-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:16px;user-select:none;}
+.otp-success-badge{background:rgba(45,158,107,.1);border:1px solid rgba(45,158,107,.3);color:#1a6e44;padding:10px 14px;font-size:13px;text-align:center;margin-bottom:14px;display:none;}
+
+/* ═══════════════════════════════════════
+   PAYMENT MODAL
+═══════════════════════════════════════ */
+.pay-steps{display:flex;border-bottom:1px solid var(--cream3);margin-bottom:20px;}
+.pay-step-tab{flex:1;padding:12px 8px;text-align:center;font-size:12px;color:var(--text3);font-weight:600;letter-spacing:.05em;text-transform:uppercase;border-bottom:2px solid transparent;cursor:default;transition:all .2s;}
+.pay-step-tab.active{color:var(--rose);border-bottom-color:var(--rose);}
+.pay-step-tab.done{color:var(--brown);}
+.pay-panel{display:none;}
+.pay-panel.active{display:block;}
+.pay-method-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.pay-method{border:2px solid var(--cream3);padding:14px 10px;text-align:center;cursor:pointer;transition:all .2s;}
+.pay-method:hover{border-color:var(--rose2);}
+.pay-method.selected{border-color:var(--rose);background:var(--rose3);}
+.pay-method-icon{font-size:24px;margin-bottom:6px;}
+.pay-method-label{font-size:12px;font-weight:600;color:var(--brown);}
+.pay-section{display:none;padding-top:4px;}
+.pay-section.active{display:block;}
+.upi-qr-wrap{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;}
+.upi-qr{width:120px;height:120px;background:var(--cream2);border:1px solid var(--cream3);flex-shrink:0;}
+.upi-id-badge{background:var(--cream2);border:1px solid var(--cream3);padding:10px 16px;font-family:monospace;font-size:14px;font-weight:700;color:var(--brown);margin:10px 0;}
+.rzp-info{background:var(--cream2);border:1px solid var(--cream3);padding:16px;margin-bottom:14px;}
+.rzp-info-title{font-size:14px;font-weight:600;color:var(--brown);margin-bottom:8px;}
+.rzp-info-row{display:flex;justify-content:space-between;font-size:13px;color:var(--text2);padding:4px 0;}
+.pay-processing{text-align:center;padding:40px 20px;}
+.pay-spinner{width:48px;height:48px;border:4px solid var(--cream3);border-top-color:var(--rose);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pay-success{text-align:center;padding:32px 20px;}
+.pay-success-icon{font-size:64px;margin-bottom:14px;}
+.pay-success-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--brown);margin-bottom:8px;}
+.pay-success-detail{font-size:13px;color:var(--text3);line-height:1.8;margin-bottom:20px;}
+
+/* ═══════════════════════════════════════
+   ORDERS PAGE
+═══════════════════════════════════════ */
+.orders-page{max-width:900px;margin:0 auto;padding:40px 24px 80px;}
+.order-card{background:var(--white);border:1px solid var(--cream3);margin-bottom:16px;overflow:hidden;}
+.order-card-header{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 20px;background:var(--cream2);border-bottom:1px solid var(--cream3);}
+.order-id{font-size:14px;font-weight:700;color:var(--brown);}
+.order-date{font-size:12px;color:var(--text3);}
+.order-items-list{padding:14px 20px;}
+.order-item-row{display:flex;justify-content:space-between;font-size:13px;color:var(--text2);padding:4px 0;}
+.order-grand{display:flex;justify-content:space-between;padding:12px 20px;border-top:1px solid var(--cream3);font-weight:700;}
+.status-badge{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;}
+.status-badge.status-confirmed{background:rgba(63,185,80,.12);color:#2d7a3a;}
+.status-badge.status-pending{background:rgba(201,168,76,.15);color:#7a6020;}
+.status-badge.status-delivered{background:rgba(88,166,255,.12);color:#1a5296;}
+.status-badge.status-cancelled{background:rgba(192,57,43,.1);color:#a93226;}
+
+/* ═══════════════════════════════════════
+   STEP CAKE BUILDER
+═══════════════════════════════════════ */
+.builder-page{max-width:900px;margin:0 auto;padding:40px 24px 80px;}
+.builder-steps{display:flex;gap:0;margin-bottom:32px;overflow-x:auto;}
+.build-step{flex:1;min-width:100px;text-align:center;padding:14px 8px;border-bottom:3px solid var(--cream3);font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);transition:all .2s;}
+.build-step.active{color:var(--rose);border-bottom-color:var(--rose);}
+.build-step.done{color:var(--brown);border-bottom-color:var(--brown);}
+.builder-panel{display:none;animation:fadeIn .3s;}
+.builder-panel.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.builder-options{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin:16px 0;}
+.build-opt{border:2px solid var(--cream3);padding:16px 12px;text-align:center;cursor:pointer;transition:all .2s;}
+.build-opt:hover{border-color:var(--rose2);}
+.build-opt.selected{border-color:var(--rose);background:var(--rose3);}
+.build-opt-icon{font-size:28px;margin-bottom:6px;}
+.build-opt-name{font-size:13px;font-weight:600;color:var(--brown);}
+.build-opt-price{font-size:12px;color:var(--rose);}
+.tier-preview{background:var(--cream2);border:1px solid var(--cream3);padding:24px;text-align:center;margin:16px 0;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.tier-block{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;}
+.builder-nav{display:flex;justify-content:space-between;margin-top:24px;}
+.builder-summary .summary-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--cream3);font-size:14px;color:var(--text2);}
+.builder-summary .summary-total{display:flex;justify-content:space-between;padding:14px 0;font-size:18px;font-weight:700;color:var(--rose);}
+
+/* ═══════════════════════════════════════
+   ADMIN PANEL
+═══════════════════════════════════════ */
+.admin-layout{display:flex;min-height:calc(100vh - 70px);overflow:hidden;}
+.admin-sidebar{width:210px;background:#3e200f;padding:0;flex-shrink:0;display:flex;flex-direction:column;min-height:calc(100vh - 70px);}
+.admin-sidebar-logo{padding:18px 16px 16px;border-bottom:1px solid rgba(255,255,255,.07);}
+.admin-sidebar-logo-wrap{display:flex;align-items:center;gap:10px;}
+.admin-sidebar-icon{width:38px;height:38px;background:var(--rose);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden;}
+.admin-sidebar-name{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700;color:#fff;line-height:1.2;}
+.admin-sidebar-sub{font-size:8px;color:rgba(255,255,255,.38);letter-spacing:.13em;text-transform:uppercase;margin-top:2px;}
+.admin-nav{padding:8px 0 16px;flex:1;display:flex;flex-direction:column;}
+.admin-nav-item{display:flex;align-items:center;gap:13px;padding:12px 16px;font-size:13px;font-weight:500;color:rgba(255,255,255,.6);cursor:pointer;transition:background .15s,color .15s;}
+.admin-nav-item:hover{color:#fff;background:rgba(255,255,255,.07);}
+.admin-nav-item.active{color:#fff;font-weight:600;background:rgba(255,255,255,.13);}
+.admin-nav-icon-box{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.admin-main{flex:1;background:var(--cream);padding:32px;overflow-y:auto;}
+.admin-section{display:none;}
+.admin-section.active{display:block;}
+.admin-section-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--brown);margin-bottom:24px;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:28px;}
+.stat-card{background:var(--white);border:1px solid var(--cream3);padding:20px;text-align:center;}
+.stat-card-icon{font-size:28px;margin-bottom:8px;}
+.stat-card-val{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;color:var(--rose);}
+.stat-card-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);}
+.admin-table-wrap{background:var(--white);border:1px solid var(--cream3);overflow:hidden;}
+.admin-table-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--cream3);}
+.admin-table-title{font-size:15px;font-weight:600;color:var(--brown);}
+.admin-table{width:100%;border-collapse:collapse;}
+.admin-table th{padding:12px 14px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--cream3);background:var(--cream2);}
+.admin-table td{padding:12px 14px;font-size:13px;color:var(--text);border-bottom:1px solid var(--cream3);vertical-align:middle;}
+.admin-table tr:last-child td{border-bottom:none;}
+.admin-table tr:hover td{background:var(--cream);}
+
+/* Admin Product Form */
+.product-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:600px){.product-form-grid{grid-template-columns:1fr;}}
+.tag-input-wrap{display:flex;flex-wrap:wrap;gap:8px;border:1.5px solid var(--cream3);padding:8px;background:var(--white);min-height:48px;align-items:center;cursor:text;}
+.tag-input-wrap:focus-within{border-color:var(--rose);}
+.tag-chip{background:var(--rose3);color:var(--rose-dark);padding:4px 10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;}
+.tag-chip-remove{cursor:pointer;font-size:14px;color:var(--rose);}
+.tag-input-wrap input{border:none!important;outline:none!important;padding:0!important;font-size:13px;min-width:120px;flex:1;background:transparent;}
+.variant-row{display:flex;gap:10px;align-items:center;margin-bottom:10px;}
+.variant-row input{flex:1;}
+
+/* Image Upload */
+.img-upload-area{border:2px dashed var(--cream3);padding:24px;text-align:center;cursor:pointer;transition:border-color .2s;position:relative;overflow:hidden;margin-bottom:4px;}
+.img-upload-area:hover{border-color:var(--rose);}
+.img-upload-area.has-img{padding:0;border-style:solid;}
+.img-upload-area img{width:100%;height:160px;object-fit:cover;display:block;}
+.img-upload-inner{display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;}
+.img-upload-icon{font-size:32px;opacity:.5;}
+.img-upload-text{font-size:13px;color:var(--text3);}
+.img-upload-note{font-size:11px;color:var(--text3);}
+#imgFileInput{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.img-remove-btn{display:none;position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;border:none;padding:4px 8px;font-size:11px;cursor:pointer;z-index:1;}
+.img-upload-area.has-img .img-remove-btn{display:block;}
+
+/* ═══════════════════════════════════════
+   WHY US SECTION
+═══════════════════════════════════════ */
+.why-us{background:var(--brown);padding:60px 24px;}
+.why-us-inner{max-width:1200px;margin:0 auto;}
+.why-us-title{font-family:'Cormorant Garamond',serif;font-size:clamp(26px,3vw,38px);font-weight:700;color:#fff;text-align:center;margin-bottom:36px;}
+.why-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px;}
+.why-item{text-align:center;padding:24px 16px;}
+.why-item-icon{font-size:36px;margin-bottom:12px;}
+.why-item-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:6px;letter-spacing:.03em;}
+.why-item-sub{font-size:12px;color:rgba(255,255,255,.6);line-height:1.7;}
+
+/* ═══════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════ */
+footer{background:var(--text);color:rgba(255,255,255,.7);padding:40px 24px;text-align:center;}
+footer .footer-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#fff;margin-bottom:10px;}
+footer p{font-size:13px;line-height:1.8;}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════ */
+@media(max-width:768px){
+  .nav-links{display:none;}
+  .cat-grid{grid-template-columns:1fr;}
+  .admin-layout{flex-direction:column;}
+  .admin-sidebar{width:100%;padding:12px 0;}
+  .admin-nav{display:flex;overflow-x:auto;}
+  .admin-nav-item{white-space:nowrap;border-left:none;border-bottom:3px solid transparent;}
+  .admin-nav-item.active{border-bottom-color:var(--rose2);}
+  .cart-sidebar{width:100%;}
+}
+
+/* Builder canvas preview responsive */
+@media(max-width:480px){
+  #cakeCanvas{width:100%!important;height:auto!important;}
+  .builder-canvas-grid{grid-template-columns:1fr!important;}
+  .builder-canvas-grid>div:first-child{border-right:none!important;border-bottom:1px solid var(--cream3);}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     TOAST
+═══════════════════════════════════════════════════ -->
+<div id="toastBox"></div>
+<!-- WhatsApp Float -->
+<a href="https://wa.me/919880305874" target="_blank" id="waFloat" style="position:fixed;bottom:24px;right:24px;z-index:8000;width:56px;height:56px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(37,211,102,0.5);text-decoration:none;" title="WhatsApp +91 98803 05874">
+  <svg width="30" height="30" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</a>
+
+
+<!-- ═══════════════════════════════════════════════════
+     NAVIGATION
+═══════════════════════════════════════════════════ -->
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo" onclick="showPage('home')">
+      <div class="nav-logo-icon" id="navLogoIconWrap"><span style="font-size:22px;position:relative;z-index:1;">&#127874;</span></div>
+      <div class="nav-logo-text">
+        <div class="nav-logo-name">Chandradeepa</div>
+        <div class="nav-logo-sub">Home Made Cakes</div>
+      </div>
+    </div>
+    <div class="nav-links">
+      <div class="nav-link" id="nl-home" onclick="showPage('home')">Home</div>
+      <div class="nav-link" id="nl-shop" onclick="showPage('shop')">All Cakes</div>
+      <div class="nav-link" id="nl-builder" onclick="showPage('builder')">Build Your Cake</div>
+      <div class="nav-link" id="nl-orders" onclick="showPage('orders')">My Orders</div>
+    </div>
+    <div class="nav-spacer"></div>
+    <div id="userArea"></div>
+    <button class="cart-btn" onclick="toggleCart()">
+      🛒 <span class="cart-badge" id="cartCount">0</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════
+     CART SIDEBAR
+═══════════════════════════════════════════════════ -->
+<div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+<div class="cart-sidebar" id="cartSidebar">
+  <div class="cart-header">
+    <div class="cart-title">Your Cart</div>
+    <button class="cart-close" onclick="toggleCart()">✕</button>
+  </div>
+  <div class="cart-items" id="cartItems">
+    <div class="empty-cart"><div class="empty-cart-icon">🛒</div><div>Your cart is empty</div></div>
+  </div>
+  <div class="cart-footer">
+    <div class="cart-total"><span>Total</span><span id="cartTotal">₹0</span></div>
+    <button class="btn btn-rose" style="width:100%;justify-content:center;" onclick="openPaymentFlow()">Checkout →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE: HOME
+═══════════════════════════════════════════════════ -->
+<div class="page active" id="page-home">
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-inner">
+      <div>
+        <div class="hero-eyebrow">✨ Handcrafted with Love in Mangalore</div>
+        <h1 class="hero-title">Every Cake is a<br><em>Work of Art</em></h1>
+        <p class="hero-sub">Fresh, homemade cakes for your most special moments — birthdays, weddings, anniversaries, and every little celebration in between.</p>
+        <div class="hero-actions">
+          <button class="btn btn-rose btn-lg" onclick="showPage('shop')">Shop All Cakes 🎂</button>
+          <button class="btn btn-outline btn-lg" onclick="showPage('builder')">Build Custom Cake</button>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-card"><div class="hero-card-icon">🎂</div><div class="hero-card-text"><strong>Birthday Cakes</strong>Colourful, fun and utterly delicious for every age</strong></div></div>
+        <div class="hero-card"><div class="hero-card-icon">💍</div><div class="hero-card-text"><strong>Wedding Cakes</strong>Elegant masterpieces for your most special day</div></div>
+        <div class="hero-card"><div class="hero-card-icon">🏰</div><div class="hero-card-text"><strong>Custom Step Cakes</strong>Multi-tier creations built just for you</div></div>
+        <div class="hero-card"><div class="hero-card-icon">🚚</div><div class="hero-card-text"><strong>Home Delivery</strong>Fresh to your doorstep across Mangalore</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Categories -->
+  <div class="section-header">
+    <div class="section-eyebrow">Browse By Occasion</div>
+    <h2 class="section-title">What are you celebrating?</h2>
+  </div>
+  <div class="cat-grid" id="homeCatGrid">
+    <!-- Rendered dynamically by renderHomeCatGrid() -->
+  </div>
+
+  <!-- Featured Products -->
+  <div class="section-header">
+    <div class="section-eyebrow">Customer Favourites</div>
+    <h2 class="section-title">Our Best-Loved Cakes</h2>
+    <p class="section-sub">Made fresh for every order — no preservatives, all love.</p>
+  </div>
+  <div class="product-grid" id="featuredGrid"></div>
+
+  <!-- Why Us -->
+  <div class="why-us">
+    <div class="why-us-inner">
+      <div class="why-us-title">Why Chandradeepa?</div>
+      <div class="why-grid">
+        <div class="why-item"><div class="why-item-icon">🌿</div><div class="why-item-title">100% Fresh</div><div class="why-item-sub">Made fresh on order — no preservatives, no shortcuts</div></div>
+        <div class="why-item"><div class="why-item-icon">💝</div><div class="why-item-title">Made With Love</div><div class="why-item-sub">Every cake is baked with care and attention to detail</div></div>
+        <div class="why-item"><div class="why-item-icon">🎨</div><div class="why-item-title">Fully Custom</div><div class="why-item-sub">Design your own cake — flavour, tiers, frosting, size</div></div>
+        <div class="why-item"><div class="why-item-icon">🚚</div><div class="why-item-title">Home Delivery</div><div class="why-item-sub">Delivered fresh and safe to your doorstep in Mangalore</div></div>
+        <div class="why-item"><div class="why-item-icon">💳</div><div class="why-item-title">Easy Payment</div><div class="why-item-sub">UPI, card, net banking, wallet or cash on delivery</div></div>
+        <div class="why-item"><div class="why-item-icon">⭐</div><div class="why-item-title">5-Star Quality</div><div class="why-item-sub">Trusted by hundreds of happy families in Mangalore</div></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-logo">&#127874; Chandradeepa Home Made Cakes</div>
+    <p>Bedra, Mangalore &middot; Fresh Homemade Cakes</p>
+    <div style="margin:14px 0;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="https://wa.me/919880305874" target="_blank" id="waFooterLink" style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#fff;padding:10px 20px;text-decoration:none;font-size:14px;font-weight:600;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp Us
+      </a>
+      <a href="tel:+919880305874" id="callFooterLink" style="display:inline-flex;align-items:center;gap:8px;background:var(--rose);color:#fff;padding:10px 20px;text-decoration:none;font-size:14px;font-weight:600;">
+        &#128222; Call +91 98803 05874
+      </a>
+    </div>
+    <p style="font-size:12px;color:rgba(255,255,255,0.6);">Available anytime &middot; Call or WhatsApp for orders &amp; enquiries<br>&copy; 2025 Chandradeepa Home Made Cakes. Made with love</p>
+  </footer>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE: SHOP
+═══════════════════════════════════════════════════ -->
+<div class="page" id="page-shop">
+  <div class="cat-page-header">
+    <div class="cat-page-back" onclick="showPage('home')">← Back to Home</div>
+    <span class="cat-page-emoji">🎂</span>
+    <div class="cat-page-title">All Our Cakes</div>
+    <div class="cat-page-sub">Browse our complete collection of homemade cakes</div>
+  </div>
+  <div class="product-grid" id="shopGrid" style="padding-top:28px;"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE: CATEGORY
+═══════════════════════════════════════════════════ -->
+<div class="page" id="page-category">
+  <div class="cat-page-header">
+    <div class="cat-page-back" onclick="showPage('home')">← Back to Home</div>
+    <span class="cat-page-emoji" id="catPageEmoji">🎂</span>
+    <div class="cat-page-title" id="catPageTitle"></div>
+    <div class="cat-page-sub" id="catPageSub"></div>
+  </div>
+  <div id="catBuilderCTA" class="hidden" style="text-align:center;padding:20px 24px 0;">
+    <button class="btn btn-gold" onclick="showPage('builder')">🏰 Build Your Own Step Cake →</button>
+  </div>
+  <div class="product-grid" id="catProductsGrid" style="padding-top:28px;"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE: BUILDER
+═══════════════════════════════════════════════════ -->
+<div class="page" id="page-builder">
+  <div class="cat-page-header">
+    <div class="cat-page-back" onclick="showPage('home')">&#8592; Back to Home</div>
+    <span class="cat-page-emoji">&#127874;</span>
+    <div class="cat-page-title">Build Your Dream Cake</div>
+    <div class="cat-page-sub">Pick your style — we'll craft it fresh, just for you</div>
+  </div>
+  <div class="builder-page">
+
+    <!-- Live Preview + Reference Upload Row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1.5px solid var(--cream3);margin-bottom:24px;background:#fff;">
+      <!-- Live Preview — real photo if admin uploaded, else canvas -->
+      <div style="padding:18px;border-right:1px solid var(--cream3);text-align:center;background:linear-gradient(160deg,#fff9f5,#fff);">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;">Your Cake Preview</div>
+        <!-- Real photo shown when tier/flavour image uploaded by admin -->
+        <div id="cakePhotoWrap" style="display:none;width:240px;height:260px;max-width:100%;margin:0 auto;position:relative;overflow:hidden;border-radius:4px;border:1px solid var(--cream3);">
+          <img id="cakePhotoImg" src="" alt="Cake" style="width:100%;height:100%;object-fit:cover;display:block;">
+          <div id="cakePhotoLabel" style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(92,61,46,.75));color:#fff;font-family:Cormorant Garamond,serif;font-size:13px;font-weight:600;padding:8px 10px;text-align:center;"></div>
+        </div>
+        <!-- Canvas fallback when no photo available -->
+        <canvas id="cakeCanvas" width="240" height="260" style="max-width:100%;display:block;margin:0 auto;"></canvas>
+        <div id="cakeLabel" style="font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--brown);font-weight:600;margin-top:6px;min-height:20px;"></div>
+      </div>
+      <!-- Reference Upload + Notes -->
+      <div style="padding:18px;text-align:center;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;">Show Us Your Design</div>
+        <div id="refUploadArea" onclick="document.getElementById('refImgInput').click()"
+             style="border:2px dashed var(--cream3);min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:border-color .2s;"
+             onmouseover="this.style.borderColor='var(--rose)'" onmouseout="this.style.borderColor='var(--cream3)'">
+          <img id="refImgPreview" style="display:none;width:100%;height:140px;object-fit:cover;position:absolute;inset:0;z-index:2;">
+          <div id="refUploadHint" style="padding:12px;text-align:center;position:relative;z-index:1;">
+            <div style="font-size:28px;">&#128247;</div>
+            <div style="font-size:11px;font-weight:600;color:var(--brown);margin-top:4px;">Upload Reference Photo</div>
+            <div style="font-size:10px;color:var(--text3);">e.g. a photo of your dream cake</div>
+          </div>
+        </div>
+        <input type="file" id="refImgInput" accept="image/*" style="display:none" onchange="handleRefImgUpload(this)">
+        <button id="refRemoveBtn" onclick="removeRefImg()" style="display:none;font-size:11px;background:none;border:none;color:var(--rose);cursor:pointer;margin-top:4px;">&#10005; Remove photo</button>
+        <textarea id="builderNotes" placeholder="Special message for the cake e.g. 'Happy Birthday Priya'..." style="width:100%;margin-top:8px;padding:8px;font-size:12px;border:1.5px solid var(--cream3);resize:none;height:52px;font-family:inherit;box-sizing:border-box;"></textarea>
+      </div>
+    </div>
+
+    <div class="builder-steps">
+      <div class="build-step active" id="bstep0">1 &#183; Tiers</div>
+      <div class="build-step" id="bstep1">2 &#183; Flavour</div>
+      <div class="build-step" id="bstep2">3 &#183; Size</div>
+      <div class="build-step" id="bstep3">4 &#183; Review</div>
+    </div>
+
+    <!-- Panel 0 — Tiers -->
+    <div class="builder-panel active" id="bpanel0">
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--brown);margin-bottom:6px;">How many tiers?</h3>
+      <div class="tier-preview" id="tierVisual"></div>
+      <div class="builder-options" id="tierOptsContainer"></div>
+      <div class="builder-nav"><span></span><button class="btn btn-rose" onclick="builderNav(1)">Next: Flavour →</button></div>
+    </div>
+
+    <!-- Panel 1 — Flavour -->
+    <div class="builder-panel" id="bpanel1">
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--brown);margin-bottom:6px;">Choose your flavour</h3>
+      <div class="builder-options" id="builderFlavourOpts">
+        <!-- Dynamically rendered by renderBuilderFlavours() -->
+      </div>
+      <div class="builder-nav"><button class="btn btn-outline" onclick="builderNav(0)">&#8592; Back</button><button class="btn btn-rose" onclick="builderNav(2)">Next: Size &#8594;</button></div>
+    </div>
+
+    <!-- Panel 2 — Size (dynamic based on tier) -->
+    <div class="builder-panel" id="bpanel2">
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--brown);margin-bottom:6px;">How many kg?</h3>
+      <p id="sizeHint" style="font-size:13px;color:var(--text3);margin-bottom:16px;"></p>
+      <div class="form-group" style="max-width:300px;">
+        <label>Weight (kg)</label>
+        <input type="number" id="builderKg" min="1" max="50" step="0.5" value="1" style="font-size:18px;font-weight:600;" oninput="updateBuilderKgPrice()">
+        <div style="font-size:12px;color:var(--text3);margin-top:4px;">Customer can enter any amount above the minimum</div>
+      </div>
+      <div style="background:var(--cream2);border:1px solid var(--cream3);padding:14px 18px;display:inline-block;margin-top:8px;">
+        <span style="font-size:13px;color:var(--text3);">Estimated price: </span>
+        <span id="builderKgPrice" style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:var(--rose);">&#8377;800</span>
+      </div>
+      <div class="builder-nav" style="margin-top:20px;"><button class="btn btn-outline" onclick="builderNav(1)">&#8592; Back</button><button class="btn btn-rose" onclick="builderNav(3)">Review Order &#8594;</button></div>
+    </div>
+
+    <!-- Panel 3 — Review -->
+    <div class="builder-panel" id="bpanel3">
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--brown);margin-bottom:14px;">Your Custom Cake</h3>
+      <div class="builder-summary" id="builderSummary"></div>
+      <div class="builder-nav" style="margin-top:20px;"><button class="btn btn-outline" onclick="builderNav(2)">&#8592; Edit</button><button class="btn btn-rose btn-lg" onclick="addBuilderToCart()">Add to Cart &#128722;</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE: ORDERS
+═══════════════════════════════════════════════════ -->
+<div class="page" id="page-orders">
+  <div class="cat-page-header">
+    <div class="cat-page-back" onclick="showPage('home')">← Back to Home</div>
+    <span class="cat-page-emoji">📦</span>
+    <div class="cat-page-title">My Orders</div>
+    <div class="cat-page-sub">Track your cake orders</div>
+  </div>
+  <div class="orders-page"><div id="myOrdersList"></div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE: AUTH
+═══════════════════════════════════════════════════ -->
+<div class="page" id="page-auth">
+  <div class="auth-page">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <span>🎂</span>
+        <div class="auth-logo-name">Chandradeepa</div>
+      </div>
+      <div class="auth-steps">
+        <div class="auth-dot active" id="adot0">G</div>
+      </div>
+
+      <!-- Google Sign In -->
+      <div id="auth-step0">
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="font-size:14px;color:var(--text3);margin-bottom:20px;">Sign in to place orders & track your cakes</div>
+          <button class="btn" onclick="signInWithGoogle()" style="width:100%;justify-content:center;background:#fff;border:1.5px solid #dadce0;color:#3c4043;font-size:15px;padding:14px 24px;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+            <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Continue with Google
+          </button>
+          <div style="margin-top:16px;font-size:12px;color:var(--text3);">Your information is safe & secure 🔒</div>
+        </div>
+        <div style="margin-top:20px;border-top:1px solid var(--cream3);padding-top:16px;">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:10px;text-align:center;">Admin access</div>
+          <div id="adminLoginForm" class="hidden">
+            <div class="form-group">
+              <label>Admin Username</label>
+              <input type="text" id="adminUsernameInput" placeholder="Enter admin username" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label>Admin Password</label>
+              <div class="pass-wrap">
+                <input type="password" id="adminPasswordInput" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')loginAsAdmin()">
+                <span class="pass-toggle" onclick="togglePassVis('adminPasswordInput',this)">👁</span>
+              </div>
+            </div>
+            <div id="adminLoginError" style="display:none;background:#fdecea;border:1px solid #f5c6c6;color:#c0392b;padding:10px 14px;font-size:13px;margin-bottom:12px;text-align:center;">❌ Incorrect username or password</div>
+            <button class="btn btn-rose" style="width:100%;justify-content:center;" onclick="loginAsAdmin()">Sign In as Admin 🔐</button>
+            <div style="text-align:center;margin-top:10px;"><span style="font-size:12px;color:var(--rose);cursor:pointer;" onclick="document.getElementById('adminLoginForm').classList.add('hidden');document.getElementById('showAdminBtn').classList.remove('hidden')">← Back</span></div>
+          </div>
+          <div id="showAdminBtn" style="text-align:center;">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('adminLoginForm').classList.remove('hidden');document.getElementById('showAdminBtn').classList.add('hidden');document.getElementById('adminUsernameInput').focus()">Admin Login 🔐</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAGE: ADMIN
+═══════════════════════════════════════════════════ -->
+<div class="page" id="page-admin">
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <div class="admin-sidebar">
+      <div class="admin-sidebar-logo">
+        <div class="admin-sidebar-logo-wrap">
+          <div class="admin-sidebar-icon">🎂</div>
+          <div>
+            <div class="admin-sidebar-name">Chandradeepa</div>
+            <div class="admin-sidebar-sub">Admin Panel</div>
+          </div>
+        </div>
+      </div>
+      <div class="admin-nav">
+        <div class="admin-nav-item active" id="anav-dashboard" onclick="adminNav('dashboard')"><span class="admin-nav-icon-box" style="background:#4a6fa5;"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" fill="rgba(255,255,255,.95)"/><rect x="8" y="1" width="5" height="5" rx="1" fill="rgba(255,255,255,.65)"/><rect x="1" y="8" width="5" height="5" rx="1" fill="rgba(255,255,255,.65)"/><rect x="8" y="8" width="5" height="5" rx="1" fill="rgba(255,255,255,.45)"/></svg></span>Dashboard</div>
+        <div class="admin-nav-item" id="anav-products" onclick="adminNav('products')"><span class="admin-nav-icon-box" style="background:#b85c42;"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 6h6v6H4z" fill="rgba(255,255,255,.8)"/><path d="M3 6h8M5 6V4a2 2 0 014 0v2" stroke="rgba(255,255,255,.95)" stroke-width="1.3" stroke-linecap="round" fill="none"/></svg></span>Products</div>
+        <div class="admin-nav-item" id="anav-sections" onclick="adminNav('sections')"><span class="admin-nav-icon-box" style="background:#b07828;"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="4" width="12" height="9" rx="1.5" fill="rgba(255,255,255,.75)"/><rect x="1" y="1" width="5" height="4" rx="1" fill="rgba(255,255,255,.95)"/></svg></span>Sections</div>
+        <div class="admin-nav-item" id="anav-orders" onclick="adminNav('orders')"><span class="admin-nav-icon-box" style="background:#3a7a55;"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="1" width="10" height="12" rx="1.5" fill="rgba(255,255,255,.8)"/><path d="M4.5 4.5h5M4.5 7h5M4.5 9.5h3" stroke="rgba(30,70,40,.5)" stroke-width="1.2" stroke-linecap="round"/></svg></span>Orders</div>
+        <div class="admin-nav-item" id="anav-customers" onclick="adminNav('customers')"><span class="admin-nav-icon-box" style="background:#6a4898;"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="5.5" cy="4.5" r="2.5" fill="rgba(255,255,255,.9)"/><path d="M1 12c0-2.5 2-4.5 4.5-4.5S10 9.5 10 12" fill="rgba(255,255,255,.75)"/><circle cx="10.5" cy="4.5" r="1.8" fill="rgba(255,255,255,.5)"/></svg></span>Customers</div>
+        <div class="admin-nav-item" id="anav-settings" onclick="adminNav('settings')"><span class="admin-nav-icon-box" style="background:#507060;"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="2" fill="rgba(255,255,255,.9)"/><path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13" stroke="rgba(255,255,255,.85)" stroke-width="1.3" stroke-linecap="round"/></svg></span>Settings</div>
+        <div class="admin-nav-item" id="anav-logout" onclick="logoutAdmin()" style="margin-top:auto;"><span class="admin-nav-icon-box" style="background:#7a3820;"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5.5 2H3a1 1 0 00-1 1v8a1 1 0 001 1h2.5" stroke="rgba(255,255,255,.8)" stroke-width="1.3" stroke-linecap="round"/><path d="M9 10l3-3-3-3M12 7H5.5" stroke="rgba(255,255,255,.95)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Logout</div>
+      </div>
+    </div>
+    <!-- Main -->
+    <div class="admin-main">
+      <!-- Dashboard -->
+      <div class="admin-section active" id="admin-dashboard">
+        <div class="admin-section-title">Dashboard</div>
+        <div class="stats-grid" id="adminStats"></div>
+        <div class="admin-table-wrap">
+          <div class="admin-table-header"><div class="admin-table-title">Recent Orders</div></div>
+          <div style="overflow-x:auto;"><table class="admin-table">
+            <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody id="dashOrdersBody"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- Sections Manager -->
+      <div class="admin-section" id="admin-sections">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+          <div class="admin-section-title" style="margin-bottom:0;">Cake Sections / Categories</div>
+          <button class="btn btn-rose" onclick="openAddSectionModal()">+ Add New Section</button>
+        </div>
+        <div style="font-size:13px;color:var(--text3);margin-bottom:18px;">These sections appear on the home page and shop page. You can add, rename, or remove sections. Existing cakes can be assigned to any section.</div>
+        <div class="admin-table-wrap">
+          <div style="overflow-x:auto;"><table class="admin-table">
+            <thead><tr><th>Emoji</th><th>Section Name</th><th>Description</th><th>Cakes</th><th>Actions</th></tr></thead>
+            <tbody id="sectionsTableBody"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- Products -->
+      <div class="admin-section" id="admin-products">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+          <div class="admin-section-title" style="margin-bottom:0;">Products</div>
+          <button class="btn btn-rose" onclick="openProductModal()">+ Add New Cake</button>
+        </div>
+        <div class="admin-table-wrap">
+          <div style="overflow-x:auto;"><table class="admin-table">
+            <thead><tr><th>Cake</th><th>Category</th><th>Base Price</th><th>Flavours</th><th>Weights</th><th>Actions</th></tr></thead>
+            <tbody id="productsTableBody"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- Orders -->
+      <div class="admin-section" id="admin-orders">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+          <div class="admin-section-title" style="margin-bottom:0;">All Orders</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <input type="text" id="orderSearchInput" placeholder="Search by name, phone, order ID" oninput="filterAdminOrders()" style="padding:8px 12px;border:1.5px solid var(--cream3);font-size:13px;min-width:220px;font-family:inherit;">
+            <select id="orderStatusFilter" onchange="filterAdminOrders()" style="padding:8px 10px;border:1.5px solid var(--cream3);font-size:13px;font-family:inherit;">
+              <option value="">All Statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+        <div id="adminOrderCards"></div>
+      </div>
+
+
+      <!-- Settings -->
+      <div class="admin-section" id="admin-settings">
+        <div class="admin-section-title">&#9881; Shop Settings</div>
+
+        <!-- Logo -->
+        <div class="admin-table-wrap" style="margin-bottom:24px;">
+          <div class="admin-table-header"><div class="admin-table-title">&#128247; Shop Logo</div></div>
+          <div style="padding:20px;">
+            <p style="font-size:13px;color:var(--text3);margin-bottom:14px;">Upload your shop logo — max 10MB. Appears in the navigation bar on all pages.</p>
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <div id="logoPreviewWrap" style="width:80px;height:80px;background:linear-gradient(135deg,var(--rose),var(--brown));display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden;flex-shrink:0;">
+                &#127874;
+              </div>
+              <div>
+                <input type="file" id="logoFileInput" accept="image/*" style="display:none" onchange="handleLogoUpload(this)">
+                <button class="btn btn-rose btn-sm" onclick="document.getElementById('logoFileInput').click()">&#128247; Upload Logo (max 10MB)</button>
+                <button class="btn btn-outline btn-sm" style="margin-left:8px;" onclick="resetLogo()">Reset to Default</button>
+                <div style="font-size:11px;color:var(--text3);margin-top:6px;">JPG or PNG recommended. Square image works best.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tier Pricing + Min Kg + Images -->
+        <div class="admin-table-wrap" style="margin-bottom:24px;">
+          <div class="admin-table-header"><div class="admin-table-title">&#127874; Tier Cake Settings (Price, Min Weight &amp; Photo)</div></div>
+          <div style="padding:20px;">
+            <p style="font-size:13px;color:var(--text3);margin-bottom:18px;">For each tier, set the base price, minimum kg, and upload a photo. The photo shows in the tier selector and visual preview. Max 10MB per image.</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;">
+              <div style="border:1.5px solid var(--cream3);padding:16px;">
+                <div style="font-weight:700;color:var(--brown);margin-bottom:10px;">1 Tier</div>
+                <div class="form-group" style="margin-bottom:10px;"><label>Base Price (&#8377;)</label><input type="number" id="tp_t1" value="800" min="0" oninput="saveTierSettings()"></div>
+                <div class="form-group" style="margin-bottom:10px;"><label>Minimum Weight (kg)</label><input type="number" id="tm_t1" value="1" min="0.5" step="0.5" oninput="saveTierSettings()"></div>
+                <div style="margin-bottom:6px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--brown2);">Tier Photo</div>
+                <input type="file" id="ti_t1" accept="image/*" style="display:none" onchange="handleTierImgUpload(this,'t1')">
+                <div id="tip_t1" style="height:80px;background:var(--cream2);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:6px;font-size:28px;">&#127874;</div>
+                <button class="btn btn-outline btn-sm" style="width:100%;" onclick="document.getElementById('ti_t1').click()">&#128247; Upload Photo</button>
+              </div>
+              <div style="border:1.5px solid var(--cream3);padding:16px;">
+                <div style="font-weight:700;color:var(--brown);margin-bottom:10px;">2 Tiers</div>
+                <div class="form-group" style="margin-bottom:10px;"><label>Base Price (&#8377;)</label><input type="number" id="tp_t2" value="1800" min="0" oninput="saveTierSettings()"></div>
+                <div class="form-group" style="margin-bottom:10px;"><label>Minimum Weight (kg)</label><input type="number" id="tm_t2" value="3" min="0.5" step="0.5" oninput="saveTierSettings()"></div>
+                <div style="margin-bottom:6px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--brown2);">Tier Photo</div>
+                <input type="file" id="ti_t2" accept="image/*" style="display:none" onchange="handleTierImgUpload(this,'t2')">
+                <div id="tip_t2" style="height:80px;background:var(--cream2);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:6px;font-size:28px;">&#127874;&#127874;</div>
+                <button class="btn btn-outline btn-sm" style="width:100%;" onclick="document.getElementById('ti_t2').click()">&#128247; Upload Photo</button>
+              </div>
+              <div style="border:1.5px solid var(--cream3);padding:16px;">
+                <div style="font-weight:700;color:var(--brown);margin-bottom:10px;">3 Tiers</div>
+                <div class="form-group" style="margin-bottom:10px;"><label>Base Price (&#8377;)</label><input type="number" id="tp_t3" value="2800" min="0" oninput="saveTierSettings()"></div>
+                <div class="form-group" style="margin-bottom:10px;"><label>Minimum Weight (kg)</label><input type="number" id="tm_t3" value="5" min="0.5" step="0.5" oninput="saveTierSettings()"></div>
+                <div style="margin-bottom:6px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--brown2);">Tier Photo</div>
+                <input type="file" id="ti_t3" accept="image/*" style="display:none" onchange="handleTierImgUpload(this,'t3')">
+                <div id="tip_t3" style="height:80px;background:var(--cream2);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:6px;font-size:28px;">&#127984;</div>
+                <button class="btn btn-outline btn-sm" style="width:100%;" onclick="document.getElementById('ti_t3').click()">&#128247; Upload Photo</button>
+              </div>
+              <div style="border:1.5px solid var(--cream3);padding:16px;">
+                <div style="font-weight:700;color:var(--brown);margin-bottom:10px;">4 Tiers</div>
+                <div class="form-group" style="margin-bottom:10px;"><label>Base Price (&#8377;)</label><input type="number" id="tp_t4" value="3800" min="0" oninput="saveTierSettings()"></div>
+                <div class="form-group" style="margin-bottom:10px;"><label>Minimum Weight (kg)</label><input type="number" id="tm_t4" value="5" min="0.5" step="0.5" oninput="saveTierSettings()"></div>
+                <div style="margin-bottom:6px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--brown2);">Tier Photo</div>
+                <input type="file" id="ti_t4" accept="image/*" style="display:none" onchange="handleTierImgUpload(this,'t4')">
+                <div id="tip_t4" style="height:80px;background:var(--cream2);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:6px;font-size:28px;">&#127983;</div>
+                <button class="btn btn-outline btn-sm" style="width:100%;" onclick="document.getElementById('ti_t4').click()">&#128247; Upload Photo</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact -->
+        <div class="admin-table-wrap">
+          <div class="admin-table-header"><div class="admin-table-title">&#128222; Contact Info</div></div>
+          <div style="padding:20px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div class="form-group" style="margin:0;"><label>WhatsApp / Phone</label><input type="text" id="settingsPhone" value="+91 98803 05874" oninput="saveContactSettings()"></div>
+              <div class="form-group" style="margin:0;"><label>Address</label><input type="text" id="settingsAddress" value="Bedra, Mangalore" oninput="saveContactSettings()"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Flavour Rates -->
+        <div class="admin-table-wrap" style="margin-top:24px;">
+          <div class="admin-table-header"><div class="admin-table-title">&#127851; Builder Flavour Extra Charges</div></div>
+          <div style="padding:20px;">
+            <p style="font-size:13px;color:var(--text3);margin-bottom:14px;">Set extra charges for special flavours in the custom cake builder. Set 0 for included flavours.</p>
+            <div id="flavourRatesContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:14px;"></div>
+            <button class="btn btn-outline btn-sm" onclick="addFlavourRateRow()">+ Add Flavour</button>
+            <button class="btn btn-rose btn-sm" style="margin-left:10px;" onclick="saveFlavourRates()">&#128190; Save Flavour Rates</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customers -->
+      <div class="admin-section" id="admin-customers">
+        <div class="admin-section-title">Customers</div>
+        <div class="admin-table-wrap">
+          <div style="overflow-x:auto;"><table class="admin-table">
+            <thead><tr><th>Name</th><th>Phone</th><th>Orders</th><th>Joined</th></tr></thead>
+            <tbody id="customersBody"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     ADMIN PRODUCT MODAL (Add / Edit Cake)
+═══════════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="adminProductModal">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header">
+      <div class="modal-title" id="apmTitle">Add New Cake</div>
+      <button class="modal-close" onclick="closeModal('adminProductModal')">✕</button>
+    </div>
+    <div class="modal-body" style="overflow-y:auto;max-height:75vh;">
+      <input type="hidden" id="apmId">
+      <input type="hidden" id="apmImgData">
+
+      <!-- Image Upload -->
+      <div class="form-group">
+        <label>Cake Photo</label>
+        <div class="img-upload-area" id="imgUploadArea" onclick="document.getElementById('imgFileInput').click()">
+          <input type="file" id="imgFileInput" accept="image/*" onchange="handleImgUpload(event)">
+          <div class="img-upload-inner">
+            <div class="img-upload-icon">📷</div>
+            <div class="img-upload-text"><strong>Click to upload cake photo</strong></div>
+            <div class="img-upload-note">JPG, PNG · Max 10MB · Recommended 600×400px</div>
+          </div>
+          <img id="imgPreview" src="" alt="" style="display:none;width:100%;height:160px;object-fit:cover;">
+          <button class="img-remove-btn" id="imgRemoveBtn" onclick="removeImg(event)">✕ Remove</button>
+        </div>
+      </div>
+
+      <div class="product-form-grid">
+        <div class="form-group"><label>Cake Name *</label><input type="text" id="apmName" placeholder="e.g. Chocolate Truffle Delight"></div>
+        <div class="form-group"><label>Category *</label>
+          <select id="apmCategory">
+            <option value="Birthday">🎂 Birthday</option>
+            <option value="Wedding">💍 Wedding</option>
+            <option value="Anniversary">🌹 Anniversary</option>
+            <option value="Step">🏰 Step / Tier</option>
+            <option value="Custom">🎨 Custom</option>
+            <option value="Cheesecake">🧀 Cheesecake</option>
+            <option value="Cupcakes">🧁 Cupcakes</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Emoji Icon</label><input type="text" id="apmEmoji" placeholder="🎂" style="font-size:20px;"></div>
+        <div class="form-group"><label>Base Price (₹) *</label><input type="number" id="apmBasePrice" placeholder="e.g. 800" min="0"></div>
+      </div>
+
+      <div class="form-group"><label>Description</label><textarea id="apmDesc" rows="2" placeholder="Describe this cake briefly…"></textarea></div>
+      <div class="form-group"><label>Badge Label (optional)</label><input type="text" id="apmBadge" placeholder="e.g. Bestseller, New, Vegan, Sugar-Free"></div>
+
+      <!-- Flavours with Prices -->
+      <div class="form-group">
+        <label>Flavours & Extra Prices * <span style="font-size:11px;font-weight:400;color:var(--text3);text-transform:none;">(set extra price = 0 if included in base price)</span></label>
+        <div id="flavourVariants"></div>
+        <button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="addFlavourRow()">+ Add Flavour</button>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;">Example: Chocolate → ₹0 (included) · Red Velvet → ₹150 extra · Mango → ₹200 extra</div>
+      </div>
+
+      <!-- Weight Variants -->
+      <div class="form-group">
+        <label>Weight & Price Variants * <span style="font-size:11px;font-weight:400;color:var(--text3);text-transform:none;">(type weight and price for each)</span></label>
+        <div id="weightVariants"></div>
+        <button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="addWeightRow()">+ Add Another Weight</button>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;">Example: Weight = "0.5 kg" → Price = 450 &nbsp;|&nbsp; Weight = "1 kg" → Price = 850</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('adminProductModal')">Cancel</button>
+      <button class="btn btn-rose" onclick="saveProduct()">💾 Save Cake</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PAYMENT MODAL
+═══════════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="paymentModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <div class="modal-title">Place Your Order</div>
+      <button class="modal-close" onclick="closeModal('paymentModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="pay-steps">
+        <div class="pay-step-tab active" id="pstep0">1 · Details</div>
+        <div class="pay-step-tab" id="pstep1">2 · Payment</div>
+        <div class="pay-step-tab" id="pstep2">3 · Confirm</div>
+      </div>
+
+      <!-- Panel 0: Order Details -->
+      <div class="pay-panel active" id="ppanel0">
+        <div style="background:var(--cream2);border:1px solid var(--cream3);padding:14px;margin-bottom:18px;font-size:13px;">
+          <div id="payOrderItems"></div>
+          <div style="display:flex;justify-content:space-between;font-weight:700;margin-top:10px;padding-top:10px;border-top:1px solid var(--cream3);">
+            <span>Total</span><span id="payOrderTotal" style="color:var(--rose);font-family:'Cormorant Garamond',serif;font-size:18px;">₹0</span>
+          </div>
+        </div>
+        <div class="product-form-grid">
+          <div class="form-group"><label>Your Name *</label><input type="text" id="py-name" placeholder="Full name"></div>
+          <div class="form-group"><label>Phone *</label><input type="tel" id="py-phone" placeholder="10-digit number"></div>
+        </div>
+        <div class="form-group"><label>Delivery Address *</label>
+          <div style="position:relative;" id="addrSearchWrap">
+            <div style="display:flex;gap:6px;margin-bottom:6px;">
+              <div style="position:relative;flex:1;">
+                <input type="text" id="addrSearchInput" autocomplete="off"
+                  placeholder="Search area or street e.g. Bolas Vijayanagara, Mangalore..."
+                  oninput="addrSearchTyping()"
+                  onfocus="if(document.getElementById('addrDropdown').children.length>0)document.getElementById('addrDropdown').style.display='block'"
+                  style="width:100%;padding:10px 36px 10px 12px;border:1.5px solid var(--rose);font-family:inherit;font-size:14px;color:var(--text);box-sizing:border-box;">
+                <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none;">&#128269;</span>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" onclick="setAddrMode('detect')" id="addrTypeDetect" title="Use my GPS location" style="white-space:nowrap;flex-shrink:0;">&#128205; My Location</button>
+            </div>
+            <div id="addrDropdown" style="display:none;position:absolute;top:48px;left:0;right:0;background:#fff;border:1.5px solid var(--rose);box-shadow:0 8px 24px rgba(92,61,46,.18);z-index:9999;max-height:240px;overflow-y:auto;border-radius:0 0 6px 6px;"></div>
+          </div>
+          <div id="addrSelectedWrap" style="display:none;background:var(--cream2);border:1.5px solid var(--cream3);padding:10px 14px;margin-top:4px;position:relative;border-radius:4px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:4px;">&#128205; Selected Address</div>
+            <div id="addrSelectedText" style="font-size:13px;color:var(--brown);line-height:1.5;padding-right:28px;"></div>
+            <button type="button" onclick="clearSelectedAddr()" style="position:absolute;top:8px;right:10px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;">&#10005;</button>
+          </div>
+          <input type="hidden" id="py-address">
+          <div id="addrMiniMap" style="display:none;margin-top:8px;border-radius:6px;overflow:hidden;border:1px solid var(--cream3);"></div>
+        </div>
+        <!-- Delivery Distance & Charges -->
+        <div style="background:var(--cream2);border:1px solid var(--cream3);padding:14px;margin-bottom:14px;">
+          <div style="font-size:12px;font-weight:700;color:var(--brown);margin-bottom:6px;">📦 Delivery Distance & Charges</div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Shop: <strong style="color:var(--brown);">Bedra, Mangalore</strong> · Charges calculated from your selected address above.</div>
+          <div id="deliveryInfo" style="display:none;">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <span id="deliveryDistText" style="font-size:13px;font-weight:600;color:var(--brown);"></span>
+              <span id="deliveryChargeTag" style="padding:3px 10px;font-size:12px;font-weight:700;border-radius:20px;"></span>
+            </div>
+            <div id="deliveryChargeNote" style="font-size:12px;color:var(--text3);margin-top:4px;"></div>
+          </div>
+          <div id="deliveryMapWrap" style="margin-top:10px;display:none;">
+            <div id="deliveryMap" style="width:100%;height:180px;border:1px solid var(--cream3);background:var(--cream2);border-radius:4px;overflow:hidden;"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px;">📦 Free delivery within 3 km · ₹100 up to 4 km · ₹100 + ₹15/km beyond 4 km</div>
+        </div>
+        <div class="form-group"><label>Delivery Date *</label><input type="date" id="py-date"></div>
+        <div class="form-group"><label>Special Instructions (optional)</label><input type="text" id="py-note" placeholder="e.g. Write 'Happy Birthday Priya' on cake"></div>
+        <button class="btn btn-rose" style="width:100%;justify-content:center;" onclick="payStep1()">Continue to Payment →</button>
+      </div>
+
+      <!-- Panel 1: Payment Method -->
+      <div class="pay-panel" id="ppanel1">
+        <div style="font-size:13px;color:var(--text3);margin-bottom:14px;">Total to pay: <strong id="payAmountBadge" style="color:var(--rose);font-size:16px;">₹0</strong></div>
+        <div class="pay-method-grid">
+          <div class="pay-method selected" id="pm-razorpay" onclick="selectPayMethod('razorpay')"><div class="pay-method-icon">💳</div><div class="pay-method-label">Razorpay<br><span style="font-size:10px;color:var(--text3);">Card · UPI · Scanner · Net Banking</span></div></div>
+          <div class="pay-method" id="pm-cod" onclick="selectPayMethod('cod')"><div class="pay-method-icon">💵</div><div class="pay-method-label">Cash on Delivery</div></div>
+        </div>
+        <!-- Razorpay Section -->
+        <div class="pay-section active" id="section-razorpay">
+          <div class="rzp-info">
+            <div class="rzp-info-title">💳 Pay via Razorpay</div>
+            <div class="rzp-info-row"><span>Accepts:</span><span>📷 QR Scanner · 💳 Card · 📱 UPI · 🌐 Net Banking · 👛 Wallets</span></div>
+            <div class="rzp-info-row"><span>Amount:</span><strong id="rzpBoxAmount" style="color:var(--rose);">₹0</strong></div>
+            <div style="font-size:11px;color:var(--text3);margin-top:8px;">🔒 Secured by Razorpay · PCI DSS Compliant</div>
+          </div>
+          <button class="btn btn-rose" style="width:100%;justify-content:center;" onclick="processRazorpay()">Pay <span id="rzpAmtBtn">₹0</span> via Razorpay 🔒</button>
+        </div>
+        <!-- COD Section -->
+        <div class="pay-section" id="section-cod">
+          <div style="text-align:center;padding:20px;background:var(--cream2);border:1px solid var(--cream3);margin-bottom:14px;">
+            <div style="font-size:40px;margin-bottom:8px;">💵</div>
+            <div style="font-size:15px;font-weight:600;color:var(--brown);">Cash on Delivery</div>
+            <div style="font-size:13px;color:var(--text3);margin-top:6px;">Pay <strong id="codAmount">₹0</strong> in cash when your cake is delivered</div>
+          </div>
+          <button class="btn btn-rose" style="width:100%;justify-content:center;" onclick="processCOD()">Place Order — Pay on Delivery →</button>
+        </div>
+        <div style="margin-top:12px;"><button class="btn btn-outline btn-sm" onclick="payGoBack()">← Back</button></div>
+      </div>
+
+      <!-- Panel 2: Processing / Success -->
+      <div class="pay-panel" id="ppanel2">
+        <div id="payProcessing" class="pay-processing">
+          <div class="pay-spinner"></div>
+          <div style="font-size:15px;color:var(--text2);" id="processingMsg">Processing payment…</div>
+        </div>
+        <div id="paySuccessPanel" class="pay-success hidden">
+          <div class="pay-success-icon">🎉</div>
+          <div class="pay-success-title">Order Placed!</div>
+          <div class="pay-success-detail">
+            Order <strong id="successOrderId"></strong><br>
+            Payment: <strong id="successPayMethod"></strong><br>
+            Amount: <strong id="successAmount" style="color:var(--rose);"></strong>
+          </div>
+          <button class="btn btn-rose" onclick="closeModal('paymentModal');showPage('orders');">View My Orders →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════ -->
+<script>
+// ════════════════════════════════════════════════════
+// ADMIN CREDENTIALS — Change here
+// ════════════════════════════════════════════════════
+const ADMIN_USERNAME = 'Admin@deepa';
+const ADMIN_PASSWORD = 'Deepa@123';
+
+// ════════════════════════════════════════════════════
+// RAZORPAY KEY — Paste your Key ID here
+// ════════════════════════════════════════════════════
+const RAZORPAY_KEY_ID = 'rzp_live_SN4XuHOp4GbMFi';
+const LOCATIONIQ_KEY = 'pk.5ecb5668cd50cbdae2d911257462201c';
+
+// ════════════════════════════════════════════════════
+// YOUR UPI ID — Change to your real UPI ID
+// ════════════════════════════════════════════════════
+const YOUR_UPI_ID = 'chandradeepa@upi';
+
+// ════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════
+let state = {
+  products: loadLS('cs_products', defaultProducts()),
+  orders:   loadLS('cs_orders', []),
+  users:    loadLS('cs_users', []),
+  cart:     loadLS('cs_cart', []),
+  currentUser: null,
+  afterLoginPage: null,
+  currentProduct: null,
+  currentProductWeight: null,
+  currentProductFlavour: null,
+  currentProductQty: 1,
+  builder: { tiers:1,tierPrice:800, flavour:'Chocolate',flavourPrice:0, size:'1 kg',sizePrice:0, kg:1 }
+};
+
+function loadLS(key, def){ try{ const v=localStorage.getItem(key); return v?JSON.parse(v):def; }catch(e){ return def; } }
+function saveLS(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+function saveProducts(){ saveLS('cs_products', state.products); }
+function saveOrders(){ saveLS('cs_orders', state.orders); }
+function saveUsers(){ saveLS('cs_users', state.users); }
+function saveCart(){ saveLS('cs_cart', state.cart); }
+
+function defaultProducts(){
+  return [
+    {id:1,name:'Chocolate Truffle',emoji:'🍫',category:'Birthday',desc:'Rich dark chocolate layers with truffle cream frosting',basePrice:850,badge:'Bestseller',flavours:[{f:'Chocolate',extra:0},{f:'Dark Chocolate',extra:50},{f:'Mocha',extra:100}],weights:[{w:'0.5 kg',p:450},{w:'1 kg',p:850},{w:'2 kg',p:1600}],img:''},
+    {id:2,name:'Vanilla Celebration',emoji:'🎂',category:'Birthday',desc:'Classic vanilla sponge with fresh cream and sprinkles',basePrice:700,badge:'',flavours:[{f:'Vanilla',extra:0},{f:'French Vanilla',extra:50},{f:'Vanilla Almond',extra:80}],weights:[{w:'0.5 kg',p:380},{w:'1 kg',p:700},{w:'2 kg',p:1350}],img:''},
+    {id:3,name:'Royal Rose Wedding',emoji:'💍',category:'Wedding',desc:'Elegant white fondant with rose gold decorations',basePrice:2500,badge:'Premium',flavours:[{f:'Vanilla',extra:0},{f:'Butterscotch',extra:0},{f:'Strawberry',extra:200}],weights:[{w:'2 kg',p:2500},{w:'3 kg',p:3500},{w:'5 kg',p:5500}],img:''},
+    {id:4,name:'Red Velvet Bliss',emoji:'🍓',category:'Birthday',desc:'Vibrant red velvet layers with cream cheese frosting',basePrice:950,badge:'Popular',flavours:[{f:'Red Velvet',extra:0},{f:'Raspberry Red Velvet',extra:150}],weights:[{w:'0.5 kg',p:500},{w:'1 kg',p:950},{w:'2 kg',p:1800}],img:''},
+    {id:5,name:'Butterscotch Dream',emoji:'🧈',category:'Anniversary',desc:'Creamy butterscotch cake with caramel drizzle',basePrice:800,badge:'',flavours:[{f:'Butterscotch',extra:0},{f:'Caramel',extra:50},{f:'Toffee',extra:80}],weights:[{w:'0.5 kg',p:420},{w:'1 kg',p:800},{w:'2 kg',p:1500}],img:''},
+    {id:6,name:'Grand Tiered Celebration',emoji:'🏰',category:'Step',desc:'Stunning 3-tier cake for grand celebrations',basePrice:3500,badge:'Grand',flavours:[{f:'Chocolate',extra:0},{f:'Vanilla',extra:0},{f:'Mix',extra:200}],weights:[{w:'3 kg',p:3500},{w:'5 kg',p:5500},{w:'8 kg',p:8000}],img:''}
+  ];
+}
+
+// ════════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════════
+function toast(msg, duration=3000){
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.getElementById('toastBox').appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateX(30px)'; el.style.transition='all .3s'; setTimeout(()=>el.remove(),300); }, duration);
+}
+
+// ════════════════════════════════════════════════════
+// PAGES
+// ════════════════════════════════════════════════════
+function _renderPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  var pg = document.getElementById('page-'+name); if(!pg) return;
+  pg.classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+  var nl = document.getElementById('nl-'+name); if(nl) nl.classList.add('active');
+  window.scrollTo(0,0);
+  if(name==='home'){ renderFeatured(); updateCategoryCounts(); }
+  if(name==='shop'){ renderShop(); }
+  if(name==='orders'){ renderMyOrders(); }
+  if(name==='admin'){ renderAdminDashboard(); renderProductsTable(); renderOrdersTable(); renderCustomersTable(); loadFirestoreOrders(); }
+  if(name==='builder'){ renderTierOptions(); renderTierVisual(); renderBuilderFlavours(); setTimeout(function(){ updateBuilderPreview(); },80); }
+
+  if(name==='auth'){ goAuthStep(0); clearRecaptcha(); }
+}
+function showPage(name){
+  _renderPage(name);
+  if(name==='builder'){ _builderNavNoHistory(0); history.pushState({page:'builder',builderStep:0},'','#builder-step0'); }
+  else { history.pushState({page:name,builderStep:-1},'','#'+name); }
+}
+window.addEventListener('popstate', function(e){
+  var st = e.state;
+  if(!st){ _renderPage('home'); return; }
+  if(st.page==='builder'){
+    _renderPage('builder');
+    var step = (typeof st.builderStep==='number' && st.builderStep>=0) ? st.builderStep : 0;
+    _builderNavNoHistory(step);
+    return;
+  }
+  _renderPage(st.page||'home');
+});
+function openModal(id){ var el=document.getElementById(id); if(!el)return; el.style.display='flex'; el.classList.remove('hidden'); }
+function closeModal(id){ var el=document.getElementById(id); if(!el)return; el.style.display='none'; el.classList.add('hidden'); }
+
+// ════════════════════════════════════════════════════
+// USER UI
+// ════════════════════════════════════════════════════
+function updateUserUI(){
+  const area = document.getElementById('userArea');
+  if(!state.currentUser){
+    area.innerHTML = `<button class="btn btn-rose btn-sm" onclick="showPage('auth')">Sign In</button>`;
+  } else if(state.currentUser.isAdmin){
+    area.innerHTML = `<div class="user-pill" onclick="showPage('admin')"><div class="user-avatar">A</div>Admin</div>`;
+  } else {
+    const init = state.currentUser.name[0].toUpperCase();
+    const avatar = state.currentUser.photo
+      ? `<img src="${state.currentUser.photo}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">`
+      : `<div class="user-avatar">${init}</div>`;
+    area.innerHTML = `<div class="user-pill" onclick="logoutUser()">${avatar}${state.currentUser.name.split(' ')[0]} ✕</div>`;
+  }
+}
+function logout(){ logoutUser(); }
+function logoutAdmin(){ stopOrderNotifications(); state.currentUser=null; updateUserUI(); showPage('home'); toast('Logged out'); }
+
+// ════════════════════════════════════════════════════
+// PRODUCTS — RENDER
+// ════════════════════════════════════════════════════
+function productCard(p, onclick){
+  const img = p.img
+    ? `<img src="${p.img}" alt="${p.name}">`
+    : `<span class="product-card-img-placeholder">${p.emoji||'🎂'}</span>`;
+  const badge = p.badge ? `<div class="product-badge">${p.badge}</div>` : '';
+  return `<div class="product-card">
+    <div class="product-card-img">${img}${badge}</div>
+    <div class="product-card-body">
+      <div class="product-card-name">${p.name}</div>
+      <div class="product-card-meta">${p.category} · ${getFlavourNames(p.flavours).slice(0,3).join(', ')}</div>
+      <div class="product-card-price">from ₹${p.basePrice}</div>
+    </div>
+    <div class="product-card-footer">
+      <span style="font-size:12px;color:var(--text3);">${p.weights.length} size${p.weights.length>1?'s':''}</span>
+      <button class="btn btn-rose btn-sm" onclick="openProductDetail('${p.id}')">Order Now</button>
+    </div>
+  </div>`;
+}
+
+function renderFeatured(){
+  const g = document.getElementById('featuredGrid');
+  if(g) g.innerHTML = state.products.slice(0,6).map(p=>productCard(p,`openProductDetail(${p.id})`)).join('');
+}
+function renderShop(){
+  const g = document.getElementById('shopGrid');
+  if(g) g.innerHTML = state.products.map(p=>productCard(p,`openProductDetail(${p.id})`)).join('');
+}
+function updateCategoryCounts(){
+  renderHomeCatGrid();
+}
+
+function renderHomeCatGrid(){
+  const grid = document.getElementById('homeCatGrid');
+  if(!grid) return;
+  const sections = getSections();
+  const bgColors = ['#fff5f0,#fce4dc','#f5f0ff,#e8dfff','#f0fff5,#d4f0de','#fffbf0,#fde8c0','#f0f5ff,#dbeafe','#fff0f5,#ffd6e7'];
+  grid.innerHTML = sections.map((s,i)=>{
+    const count = state.products.filter(p=>p.category===s.key||p.category===s.name).length;
+    const [c1,c2] = (bgColors[i%bgColors.length]).split(',');
+    return `<div class="cat-card" onclick="showCategoryPage('${s.key}')" style="cursor:pointer;">
+      <div class="cat-card-bg" style="background:linear-gradient(135deg,${c1} 0%,${c2} 100%);position:absolute;inset:0;z-index:0;"></div>
+      <div class="cat-card-ribbon" style="position:absolute;top:16px;right:16px;z-index:2;background:${s.color||'#c4756a'};color:#fff;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;">${i===0?'Most Popular':i===1?'Premium':'Custom'}</div>
+      <div class="cat-card-inner" style="position:relative;z-index:1;">
+        <span class="cat-card-emoji">${s.emoji}</span>
+        <div class="cat-card-title">${s.name}</div>
+        <div class="cat-card-sub">${s.desc||''}</div>
+        <div class="cat-card-count">${count} cake${count!==1?'s':''} available</div>
+        <div class="cat-card-arrow">Browse Cakes →</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showCategoryPage(cat){
+  const sections = getSections();
+  const s = sections.find(x=>x.key===cat||x.name===cat);
+  const meta = s
+    ? {emoji:s.emoji, title:s.name, sub:s.desc||'', filter:p=>p.category===s.key||p.category===s.name}
+    : {emoji:'🎂', title:cat, sub:'', filter:p=>p.category===cat};
+  if(!meta) return;
+  document.getElementById('catPageEmoji').textContent = meta.emoji;
+  document.getElementById('catPageTitle').textContent = meta.title;
+  document.getElementById('catPageSub').textContent = meta.sub;
+  const cta = document.getElementById('catBuilderCTA');
+  if(cta) cta.classList.toggle('hidden', cat!=='Step');
+  const filtered = state.products.filter(meta.filter);
+  const grid = document.getElementById('catProductsGrid');
+  if(filtered.length===0){
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:80px 20px;color:var(--text3);">
+      <div style="font-size:56px;margin-bottom:14px;">${meta.emoji}</div>
+      <div style="font-size:18px;font-weight:600;color:var(--brown);margin-bottom:8px;">No ${cat} cakes yet</div>
+      <div style="margin-bottom:20px;">Admin is adding cakes soon. Check back shortly!</div>
+      <button class="btn btn-rose" onclick="showPage('shop')">See All Cakes →</button>
+    </div>`;
+  } else {
+    grid.innerHTML = filtered.map(p=>productCard(p,`openProductDetail(${p.id})`)).join('');
+  }
+  showPage('category');
+}
+
+// ════════════════════════════════════════════════════
+// PRODUCT DETAIL MODAL
+// ════════════════════════════════════════════════════
+// Helper: normalise flavours to always {f, extra} objects
+function normFlavours(flavours){ return (flavours||[]).map(f=>typeof f==='string'?{f,extra:0}:f); }
+function getFlavourNames(flavours){ return normFlavours(flavours).map(x=>x.f); }
+
+
+// ================================================================
+// PRODUCT MODAL - dynamic, built fresh every click, no stale refs
+// ================================================================
+function openProductDetail(id){
+  var old=document.getElementById('productModal');
+  if(old) old.parentNode.removeChild(old);
+
+  var p=null;
+  for(var i=0;i<state.products.length;i++){
+    if(String(state.products[i].id)===String(id)){p=state.products[i];break;}
+  }
+  if(!p){toast('Could not load cake. Please refresh the page.');return;}
+
+  state.currentProduct=p;
+  state.currentProductQty=1;
+  state.currentProductWeight=(p.weights&&p.weights[0])?p.weights[0]:null;
+  state.currentProductFlavour='';
+  state.currentProductFlavourExtra=0;
+  var fls=normFlavours(p.flavours);
+  if(fls.length>0){state.currentProductFlavour=fls[0].f;state.currentProductFlavourExtra=fls[0].extra||0;}
+
+  var wHtml=(p.weights||[]).map(function(w,i){
+    return '<div class="variant-opt'+(i===0?' selected':'')+'" onclick="pmSelectWeight(this,\''+w.w+'\','+w.p+')">'+w.w+' \u00b7 \u20b9'+w.p+'</div>';
+  }).join('');
+
+  var fHtml=fls.map(function(fl,i){
+    var tag=fl.extra>0?' <span style="color:var(--rose);font-size:11px;font-weight:600;">+\u20b9'+fl.extra+'</span>':' <span style="font-size:11px;color:var(--text3);">included</span>';
+    var fimgAttr=(fl.img&&fl.img.length>5)?' data-fimg="'+fl.img+'"':'';
+    return '<div class="variant-opt'+(i===0?' selected':'')+'"'+fimgAttr+' onclick="pmSelectFlavour(this,\''+fl.f+'\','+fl.extra+')">'+fl.f+tag+'</div>';
+  }).join('');
+
+  var imgHtml=p.img
+    ?'<img id="pmMainImg" src="'+p.img+'" alt="'+p.name+'" style="width:100%;height:300px;object-fit:contain;background:#fff8f4;">'
+    :'<span id="pmMainImg" style="font-size:80px;">'+(p.emoji||'\ud83c\udf82')+'</span>';
+
+  if(fls.length>0&&fls[0].img&&fls[0].img.length>5&&p.img){ imgHtml=imgHtml.replace('src="'+p.img+'"','src="'+fls[0].img+'"'); }
+  var initPrice=state.currentProductWeight?(state.currentProductWeight.p+(state.currentProductFlavourExtra||0)):0;
+
+  var overlay=document.createElement('div');
+  overlay.id='productModal';
+  overlay.style.cssText='display:flex;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;padding:20px;overflow-y:auto;';
+  overlay.addEventListener('click',function(e){if(e.target===overlay)pmClose();});
+
+  overlay.innerHTML=''
+    +'<div onclick="event.stopPropagation()" style="background:#fff;width:100%;max-width:540px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 12px 48px rgba(92,61,46,.2);">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--cream3);">'
+    +'<div style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:700;color:var(--brown);">'+p.name+'</div>'
+    +'<button onclick="pmClose()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#8a6a58;">\u00d7</button>'
+    +'</div>'
+    +'<div style="padding:24px;overflow-y:auto;">'
+    +'<div id="pmImgWrap" style="height:300px;display:flex;align-items:center;justify-content:center;background:var(--cream2);margin:-24px -24px 20px;overflow:hidden;position:relative;">'+imgHtml+'</div>'
+    +'<div style="font-size:13px;color:var(--text3);margin-bottom:14px;">'+(p.desc||'')+'</div>'
+    +'<div style="margin-bottom:14px;"><div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--brown2);margin-bottom:7px;">Weight</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:8px;" id="pmWeights">'+wHtml+'</div></div>'
+    +'<div style="margin-bottom:14px;"><div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--brown2);margin-bottom:7px;">Flavour</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:8px;" id="pmFlavours">'+fHtml+'</div></div>'
+    +'<div><div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--brown2);margin-bottom:7px;">Quantity</div>'
+    +'<div style="display:flex;align-items:center;gap:14px;">'
+    +'<button onclick="pmChangeQty(-1)" style="width:34px;height:34px;border:1.5px solid var(--cream3);background:#fff;font-size:18px;cursor:pointer;">\u2212</button>'
+    +'<span id="pmQty" style="font-size:18px;font-weight:700;min-width:30px;text-align:center;">1</span>'
+    +'<button onclick="pmChangeQty(1)" style="width:34px;height:34px;border:1.5px solid var(--cream3);background:#fff;font-size:18px;cursor:pointer;">+</button>'
+    +'<span id="pmPrice" style="margin-left:auto;font-family:Cormorant Garamond,serif;font-size:28px;font-weight:700;color:var(--rose);">\u20b9'+initPrice+'</span>'
+    +'</div></div>'
+    +'</div>'
+    +'<div style="padding:16px 24px;border-top:1px solid var(--cream3);display:flex;gap:10px;justify-content:flex-end;">'
+    +'<button class="btn btn-outline" onclick="pmClose()">Cancel</button>'
+    +'<button class="btn btn-rose" onclick="pmAddToCart()">Add to Cart</button>'
+    +'</div>'
+    +'</div>';
+
+  document.body.appendChild(overlay);
+}
+
+function pmClose(){
+  var el=document.getElementById('productModal');
+  if(el) el.parentNode.removeChild(el);
+  state.currentProduct=null;
+  state.currentProductWeight=null;
+}
+
+function pmSelectWeight(el,w,p){
+  var all=document.querySelectorAll('#pmWeights .variant-opt');
+  for(var i=0;i<all.length;i++) all[i].classList.remove('selected');
+  el.classList.add('selected');
+  state.currentProductWeight={w:w,p:p};
+  pmUpdatePrice();
+}
+
+function pmSelectFlavour(el,f,extra){
+  var all=document.querySelectorAll('#pmFlavours .variant-opt');
+  for(var i=0;i<all.length;i++) all[i].classList.remove('selected');
+  el.classList.add('selected');
+  state.currentProductFlavour=f;
+  state.currentProductFlavourExtra=extra||0;
+  // Swap product image to flavour-specific image
+  var fImg=el.getAttribute('data-fimg')||'';
+  var mainImg=document.getElementById('pmMainImg');
+  if(mainImg&&mainImg.tagName==='IMG'){
+    var p=state.currentProduct;
+    mainImg.src = fImg||(p&&p.img?p.img:'');
+  }
+  pmUpdatePrice();
+}
+
+function pmUpdatePrice(){
+  var el=document.getElementById('pmPrice');
+  if(!el||!state.currentProductWeight) return;
+  var total=(state.currentProductWeight.p+(state.currentProductFlavourExtra||0))*state.currentProductQty;
+  el.textContent='\u20b9'+total;
+}
+
+function pmChangeQty(d){
+  state.currentProductQty=Math.max(1,state.currentProductQty+d);
+  var el=document.getElementById('pmQty');
+  if(el) el.textContent=state.currentProductQty;
+  pmUpdatePrice();
+}
+
+function pmAddToCart(){
+  var p=state.currentProduct;
+  if(!p){toast('No cake selected');return;}
+  if(!state.currentProductWeight){toast('Please select a weight');return;}
+  var unitPrice=state.currentProductWeight.p+(state.currentProductFlavourExtra||0);
+  var flavourLabel=state.currentProductFlavourExtra>0
+    ?state.currentProductFlavour+' (+\u20b9'+state.currentProductFlavourExtra+')'
+    :state.currentProductFlavour;
+  var item={id:Date.now(),name:p.name,emoji:p.emoji,img:p.img||'',weight:state.currentProductWeight.w,flavour:flavourLabel,price:unitPrice,qty:state.currentProductQty};
+  state.cart.push(item);saveCart();updateCartUI();
+  pmClose();
+  toast(p.name+' added to cart!');
+}
+
+function addToCartFromModal(){pmAddToCart();}
+function changeQty(d){pmChangeQty(d);}
+function updateModalPrice(){pmUpdatePrice();}
+
+// ════════════════════════════════════════════════════
+// CART
+// ════════════════════════════════════════════════════
+function toggleCart(){ document.getElementById('cartSidebar').classList.toggle('open'); document.getElementById('cartOverlay').classList.toggle('open'); }
+function updateCartUI(){
+  const total = state.cart.reduce((s,i)=>s+i.price*i.qty,0);
+  document.getElementById('cartCount').textContent = state.cart.reduce((s,i)=>s+i.qty,0);
+  document.getElementById('cartTotal').textContent = `₹${total}`;
+  const el = document.getElementById('cartItems');
+  if(state.cart.length===0){ el.innerHTML=`<div class="empty-cart"><div class="empty-cart-icon">🛒</div><div>Your cart is empty</div></div>`; return; }
+  el.innerHTML = state.cart.map(item=>{
+    const thumbHtml = item.img
+      ? `<div class="cart-item-img"><img src="${item.img}" alt="${item.name}"></div>`
+      : `<div class="cart-item-img">${item.emoji}</div>`;
+    return `<div class="cart-item">
+      ${thumbHtml}
+      <div class="cart-item-info">
+        <div class="cart-item-name">${item.name}</div>
+        <div class="cart-item-meta">${item.weight} · ${item.flavour} · Qty: ${item.qty}</div>
+        <div class="cart-item-price">₹${item.price*item.qty}</div>
+      </div>
+      <button class="cart-item-remove" onclick="removeCartItem(${item.id})">✕</button>
+    </div>`;
+  }).join('');
+}
+function removeCartItem(id){ state.cart=state.cart.filter(i=>i.id!==id); saveCart(); updateCartUI(); }
+
+// ════════════════════════════════════════════════════
+// BUILDER
+// ════════════════════════════════════════════════════
+let builderStepNum = 0;
+const tierColors = ['#c4756a','#d4897e','#e8b4a8','#f0cdc6'];
+
+function getTierPrices(){ return loadLS('cs_tier_prices',{t1:800,t2:1800,t3:2800,t4:3800}); }
+function getTierMinKg(){ return loadLS('cs_tier_min_kg',{t1:1,t2:3,t3:5,t4:5}); }
+function getTierImages(){ return loadLS('cs_tier_images',{t1:'',t2:'',t3:'',t4:''}); }
+
+function selectBuild(key, val, price, el){
+  el.closest('.builder-options').querySelectorAll('.build-opt').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  state.builder[key] = val;
+  state.builder[key+'Price'] = price||0;
+  if(key==='tiers'){ renderTierVisual(); updateSizePanel(); }
+  if(builderStepNum===3) renderBuilderSummary();
+  updateBuilderPreview();
+}
+
+function renderTierOptions(){
+  var container = document.getElementById('tierOptsContainer'); if(!container) return;
+  var prices = getTierPrices();
+  var imgs = getTierImages();
+  var tiers = [
+    {n:1, price:prices.t1, img:imgs.t1},
+    {n:2, price:prices.t2, img:imgs.t2},
+    {n:3, price:prices.t3, img:imgs.t3},
+    {n:4, price:prices.t4, img:imgs.t4}
+  ];
+  container.innerHTML = tiers.map(function(t,i){
+    var sel = (state.builder.tiers===t.n) ? ' selected' : (i===0&&!state.builder.tiers?' selected':'');
+    var iconHtml = t.img
+      ? '<div class="build-opt-icon" style="padding:0;height:70px;overflow:hidden;"><img src="'+t.img+'" style="width:100%;height:70px;object-fit:cover;"></div>'
+      : '<div class="build-opt-icon">'+['&#127874;','&#127874;&#127874;','&#127984;','&#127983;'][i]+'</div>';
+    return '<div class="build-opt'+sel+'" onclick="selectBuild(\'tiers\','+t.n+','+t.price+',this)">'+iconHtml+'<div class="build-opt-name">'+t.n+' Tier'+(t.n>1?'s':'')+'</div><div class="build-opt-price">from &#8377;'+t.price.toLocaleString()+'</div></div>';
+  }).join('');
+}
+
+function renderTierVisual(){
+  var n = state.builder.tiers||1;
+  var imgs = getTierImages();
+  var v = document.getElementById('tierVisual'); if(!v) return;
+  var tierKey = 't'+n;
+  if(imgs[tierKey]){
+    v.innerHTML = '<img src="'+imgs[tierKey]+'" alt="'+n+' Tier" style="max-height:180px;max-width:260px;object-fit:contain;">';
+  } else {
+    var html='';
+    for(var i=n;i>=1;i--){ var w=100+i*40; html+='<div class="tier-block" style="width:'+w+'px;height:32px;background:'+(tierColors[i-1]||'#c4756a')+';font-size:11px;">Tier '+i+'</div>'; }
+    v.innerHTML = html;
+  }
+}
+
+function updateSizePanel(){
+  var tiers = state.builder.tiers||1;
+  var minKgs = getTierMinKg();
+  var minKey = 't'+tiers;
+  var minKg = minKgs[minKey]||1;
+  var hint = document.getElementById('sizeHint');
+  var input = document.getElementById('builderKg');
+  if(hint) hint.textContent = tiers+' tier cake minimum: '+minKg+' kg. You can order more if needed.';
+  if(input){
+    input.min = minKg;
+    if(parseFloat(input.value) < minKg) input.value = minKg;
+  }
+  updateBuilderKgPrice();
+}
+
+function updateBuilderKgPrice(){
+  var kg = parseFloat(document.getElementById('builderKg').value)||1;
+  var tiers = state.builder.tiers||1;
+  var prices = getTierPrices();
+  var basePrice = prices['t'+tiers]||800;
+  // Price per kg = basePrice / min kg, then multiply
+  var minKgs = getTierMinKg();
+  var minKg = minKgs['t'+tiers]||1;
+  var pricePerKg = Math.ceil(basePrice / minKg);
+  var total = Math.ceil(pricePerKg * kg);
+  state.builder.kg = kg;
+  state.builder.sizePrice = total - (prices['t'+tiers]||800);
+  state.builder.size = kg+' kg';
+  var el = document.getElementById('builderKgPrice');
+  if(el) el.textContent = '₹'+total.toLocaleString();
+  if(builderStepNum===3) renderBuilderSummary();
+}
+
+function _builderNavNoHistory(step){
+  document.querySelectorAll('.builder-panel').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.build-step').forEach(function(s,i){ s.classList.remove('active','done'); if(i<step) s.classList.add('done'); if(i===step) s.classList.add('active'); });
+  var panel = document.getElementById('bpanel'+step); if(panel) panel.classList.add('active');
+  builderStepNum = step;
+  if(step===2) updateSizePanel();
+  if(step===3) renderBuilderSummary();
+  updateBuilderPreview();
+}
+function builderNav(step){
+  _builderNavNoHistory(step);
+  history.pushState({page:'builder', builderStep:step}, '', '#builder-step'+step);
+}
+
+function renderBuilderSummary(){
+  var b = state.builder;
+  var prices = getTierPrices();
+  var minKgs = getTierMinKg();
+  var kg = parseFloat(document.getElementById('builderKg').value)||minKgs['t'+(b.tiers||1)]||1;
+  var basePrice = prices['t'+(b.tiers||1)]||800;
+  var minKg = minKgs['t'+(b.tiers||1)]||1;
+  var pricePerKg = Math.ceil(basePrice/minKg);
+  var total = Math.ceil(pricePerKg*kg) + (b.flavourPrice||0);
+  document.getElementById('builderSummary').innerHTML =
+    '<div class="summary-row"><span>Tiers</span><span>'+(b.tiers||1)+' tier'+((b.tiers||1)>1?'s':'')+' &middot; &#8377;'+basePrice+'</span></div>'+
+    '<div class="summary-row"><span>Flavour</span><span>'+(b.flavour||'Chocolate')+((b.flavourPrice)?(' &middot; +&#8377;'+b.flavourPrice):' &middot; included')+'</span></div>'+
+    '<div class="summary-row"><span>Weight</span><span>'+kg+' kg</span></div>'+
+    '<div class="summary-total"><span>Estimated Total</span><span>&#8377;'+total.toLocaleString()+'</span></div>';
+}
+
+function addBuilderToCart(){
+  var b = state.builder;
+  var prices = getTierPrices();
+  var minKgs = getTierMinKg();
+  var kg = parseFloat((document.getElementById('builderKg')||{}).value)||minKgs['t'+(b.tiers||1)]||1;
+  var basePrice = prices['t'+(b.tiers||1)]||800;
+  var minKg = minKgs['t'+(b.tiers||1)]||1;
+  var pricePerKg = Math.ceil(basePrice/minKg);
+  var total = Math.ceil(pricePerKg*kg) + (b.flavourPrice||0);
+  var notes=(document.getElementById('builderNotes')||{}).value||'';
+  var canvas=document.getElementById('cakeCanvas');
+  var canvasImg=canvas?canvas.toDataURL('image/png'):'';
+  state.cart.push({
+    id:Date.now(),
+    name:'Custom '+(b.tiers||1)+'-Tier '+(b.flavour||'Chocolate')+' Cake',
+    emoji:'&#127874;',img:canvasImg,
+    weight:kg+' kg',flavour:b.flavour||'Chocolate',
+    price:total,qty:1,
+    notes:notes,refImg:b.refImg||''
+  });
+  saveCart(); updateCartUI();
+  toast('Custom cake added to cart!'); toggleCart();
+}
+
+// ════════════════════════════════════════════════════
+// GOOGLE SIGN-IN
+// ════════════════════════════════════════════════════
+async function signInWithGoogle(){
+  if(!window._fb){ toast('❌ Firebase not configured'); return; }
+  try {
+    const provider = new window._fb.GoogleAuthProvider();
+    const result = await window._fb.signInWithPopup(window._fb.auth, provider);
+    const user = result.user;
+    const userData = { name: user.displayName||user.email, email: user.email, photo: user.photoURL||'', joined: new Date().toLocaleDateString() };
+    // Save to Firestore users collection
+    await window._fb.setDoc(window._fb.doc(window._fb.db,'users',user.uid), userData, {merge:true});
+    if(!state.users.find(u=>u.email===user.email)){ state.users.push(userData); saveUsers(); }
+    state.currentUser = { name: user.displayName||user.email, email: user.email, photo: user.photoURL||'', isAdmin: false };
+    updateUserUI();
+    showPage(state.afterLoginPage||'home'); state.afterLoginPage=null;
+    toast('Welcome, '+state.currentUser.name+'! 🎂');
+  } catch(e) {
+    if(e.code !== 'auth/popup-closed-by-user') toast('❌ Sign-in failed: '+(e.message||e.code));
+  }
+}
+
+async function logoutUser(){
+  if(window._fb) try{ await window._fb.signOut(window._fb.auth); }catch(e){}
+  state.currentUser = null;
+  updateUserUI(); showPage('home'); toast('Signed out successfully');
+}
+
+function goAuthStep(step){}
+function clearRecaptcha(){}
+function togglePassVis(inputId, icon){ const inp=document.getElementById(inputId); if(inp.type==='password'){inp.type='text';icon.textContent='🙈';}else{inp.type='password';icon.textContent='👁';} }
+
+// ════════════════════════════════════════════════════
+// ADMIN ORDER NOTIFICATIONS (Browser Push)
+// ════════════════════════════════════════════════════
+let _lastOrderCount = 0;
+let _notifInterval = null;
+
+async function requestNotificationPermission(){
+  if(!('Notification' in window)) return;
+  if(Notification.permission === 'default') await Notification.requestPermission();
+}
+
+function startOrderNotifications(){
+  if(!('Notification' in window)) return;
+  requestNotificationPermission();
+  _lastOrderCount = state.orders.length;
+  _notifInterval = setInterval(async ()=>{
+    if(!state.currentUser?.isAdmin) return;
+    if(!window._fb) return;
+    try {
+      const q=window._fb.query(window._fb.collection(window._fb.db,'orders'),window._fb.orderBy('timestamp','desc'));
+      const snap=await window._fb.getDocs(q);
+      const orders=snap.docs.map(d=>({...d.data(),_docId:d.id}));
+      if(orders.length > _lastOrderCount){
+        const newOrders = orders.length - _lastOrderCount;
+        _lastOrderCount = orders.length;
+        state.orders = orders; saveOrders(); renderAdminDashboard(); renderOrdersTable(); filterAdminOrders();
+        // Show browser notification
+        if(Notification.permission==='granted'){
+          new Notification('🎂 New Order!', {
+            body: `You have ${newOrders} new order${newOrders>1?'s':''}! Check your admin panel.`,
+            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🎂</text></svg>'
+          });
+        }
+        toast(`🔔 ${newOrders} new order${newOrders>1?'s':''} received!`);
+      }
+    } catch(e){}
+  }, 30000); // check every 30 seconds
+}
+
+function stopOrderNotifications(){ if(_notifInterval){ clearInterval(_notifInterval); _notifInterval=null; } }
+
+async function forgotPassword(){ showPage('auth'); toast('Please sign in again with Google'); }
+
+function loginAsAdmin(){
+  const u = document.getElementById('adminUsernameInput').value.trim();
+  const p = document.getElementById('adminPasswordInput').value;
+  const errEl = document.getElementById('adminLoginError');
+  if(u === ADMIN_USERNAME && p === ADMIN_PASSWORD){
+    errEl.style.display = 'none';
+    document.getElementById('adminLoginForm').classList.add('hidden');
+    document.getElementById('showAdminBtn').classList.remove('hidden');
+    document.getElementById('adminUsernameInput').value = '';
+    document.getElementById('adminPasswordInput').value = '';
+    state.currentUser = {name:'Admin', isAdmin:true};
+    updateUserUI();
+    showPage('admin');
+    toast('Welcome, Admin! 🔐');
+    startOrderNotifications();
+  } else {
+    errEl.style.display = 'block';
+    document.getElementById('adminPasswordInput').value = '';
+    document.getElementById('adminPasswordInput').focus();
+  }
+}
+
+// ════════════════════════════════════════════════════
+// ADMIN — PANEL
+// ════════════════════════════════════════════════════
+function adminNav(s){
+  document.querySelectorAll('.admin-section').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.admin-nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('admin-'+s).classList.add('active');
+  var ni=document.getElementById('anav-'+s); if(ni) ni.classList.add('active');
+  if(s==='orders') loadFirestoreOrders();
+  if(s==='sections') renderSectionsTable();
+  if(s==='settings'){ loadTierSettingsAdmin(); loadLogoSettings(); loadContactSettings(); loadFlavourRatesAdmin(); }
+}
+
+// ════════════════════════════════════════════════════
+// SECTIONS MANAGEMENT
+// ════════════════════════════════════════════════════
+const DEFAULT_SECTIONS = [
+  {key:'Birthday', name:'Birthday Cakes', emoji:'🎂', desc:'Joyful cakes for every birthday celebration', color:'#c4756a'},
+  {key:'Wedding', name:'Wedding Cakes', emoji:'💍', desc:'Elegant & timeless cakes for your special day', color:'#7c5cbf'},
+  {key:'Custom', name:'Build Your Own Cake', emoji:'🎨', desc:'Customise flavour, size, frosting & design', color:'#2d8a56'},
+];
+
+function getSections(){ return loadLS('cs_sections', DEFAULT_SECTIONS); }
+function saveSections(sec){ saveLS('cs_sections', sec); }
+
+function renderSectionsTable(){
+  const sections = getSections();
+  const tbody = document.getElementById('sectionsTableBody');
+  if(!tbody) return;
+  tbody.innerHTML = sections.map(s=>{
+    const count = state.products.filter(p=>p.category===s.key||p.category===s.name).length;
+    return `<tr>
+      <td style="font-size:28px;">${s.emoji}</td>
+      <td><strong>${s.name}</strong><br><small style="color:var(--text3);">${s.key}</small></td>
+      <td style="font-size:13px;color:var(--text3);">${s.desc||'—'}</td>
+      <td>${count} cake${count!==1?'s':''}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-outline btn-sm" onclick="openEditSectionModal('${s.key}')" style="margin-right:6px;">Edit</button>
+        ${DEFAULT_SECTIONS.find(d=>d.key===s.key)?'<span style="font-size:11px;color:var(--text3);">Default</span>':'<button class="btn btn-danger btn-sm" onclick="deleteSection(\''+s.key+'\')">Delete</button>'}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openAddSectionModal(){
+  document.getElementById('sectionModalTitle').textContent = 'Add New Section';
+  document.getElementById('sectionEditKey').value = '';
+  document.getElementById('sectionEmoji').value = '🎂';
+  document.getElementById('sectionName').value = '';
+  document.getElementById('sectionDesc').value = '';
+  document.getElementById('sectionColor').value = '#c4756a';
+  openModal('sectionModal');
+}
+
+function openEditSectionModal(key){
+  const sec = getSections().find(s=>s.key===key);
+  if(!sec) return;
+  document.getElementById('sectionModalTitle').textContent = 'Edit Section';
+  document.getElementById('sectionEditKey').value = key;
+  document.getElementById('sectionEmoji').value = sec.emoji;
+  document.getElementById('sectionName').value = sec.name;
+  document.getElementById('sectionDesc').value = sec.desc||'';
+  document.getElementById('sectionColor').value = sec.color||'#c4756a';
+  openModal('sectionModal');
+}
+
+function saveSection(){
+  const editKey = document.getElementById('sectionEditKey').value;
+  const emoji = document.getElementById('sectionEmoji').value.trim()||'🎂';
+  const name = document.getElementById('sectionName').value.trim();
+  const desc = document.getElementById('sectionDesc').value.trim();
+  const color = document.getElementById('sectionColor').value;
+  if(!name){ toast('❌ Please enter a section name'); return; }
+  const key = editKey || name.replace(/\s+/g,'');
+  const sections = getSections();
+  const existing = sections.findIndex(s=>s.key===editKey);
+  const newSec = {key, name, emoji, desc, color};
+  if(existing>=0) sections[existing]=newSec;
+  else sections.push(newSec);
+  saveSections(sections);
+  // Update category dropdown in product modal
+  updateCategoryDropdown();
+  renderSectionsTable();
+  updateCategoryCounts();
+  renderFeatured();
+  closeModal('sectionModal');
+  toast(`✅ Section "${name}" saved!`);
+}
+
+function deleteSection(key){
+  if(!confirm('Delete this section? Cakes in this section will still exist.')) return;
+  const sections = getSections().filter(s=>s.key!==key);
+  saveSections(sections);
+  updateCategoryDropdown();
+  renderSectionsTable();
+  updateCategoryCounts();
+  toast('Section deleted');
+}
+
+function updateCategoryDropdown(){
+  const sel = document.getElementById('apmCategory');
+  if(!sel) return;
+  const sections = getSections();
+  sel.innerHTML = sections.map(s=>`<option value="${s.key}">${s.emoji} ${s.name}</option>`).join('');
+}
+
+function renderAdminDashboard(){
+  const rev=state.orders.reduce((s,o)=>s+o.total,0);
+  document.getElementById('adminStats').innerHTML=[
+    {icon:'🎂',val:state.products.length,label:'Products'},
+    {icon:'📦',val:state.orders.length,label:'Orders'},
+    {icon:'💰',val:'₹'+rev.toLocaleString(),label:'Revenue'},
+    {icon:'👥',val:state.users.length,label:'Customers'}
+  ].map(s=>`<div class="stat-card"><div class="stat-card-icon">${s.icon}</div><div class="stat-card-val">${s.val}</div><div class="stat-card-label">${s.label}</div></div>`).join('');
+  const tbody=document.getElementById('dashOrdersBody');
+  if(tbody) tbody.innerHTML=state.orders.slice(0,5).map(o=>orderRow(o,false)).join('')||'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3);">No orders yet</td></tr>';
+}
+
+function orderRow(o, actions){
+  const sc={'Pending':'status-pending','Confirmed':'status-confirmed','Delivered':'status-delivered','Cancelled':'status-cancelled'}[o.status]||'';
+  const opts=['Pending','Confirmed','Delivered','Cancelled'].map(s=>`<option${s===o.status?' selected':''}>${s}</option>`).join('');
+  const payBadge = o.paymentStatus==='Paid'
+    ? '<span style="color:#2d9e6b;font-size:11px;font-weight:600;">✓ Paid</span>'
+    : '<span style="color:#c9a84c;font-size:11px;font-weight:600;">COD</span>';
+  return `<tr>
+    <td><strong>#${o.id}</strong><br><small style="color:var(--text3)">${o.paymentMethod||'—'}</small><br>${payBadge}</td>
+    <td>${o.customer.name}<br><small style="color:var(--text3)">${o.customer.phone||o.customer.email||''}</small></td>
+    <td>${o.items.map(i=>{
+      const imgHtml = i.img && i.img.length>10 ? `<img src="${i.img}" style="width:40px;height:36px;object-fit:cover;vertical-align:middle;border-radius:3px;margin-right:4px;">` : `<span>${i.emoji||'🎂'}</span>`;
+      const refHtml = i.refImg && i.refImg.length>10 ? `<br><img src="${i.refImg}" style="width:40px;height:32px;object-fit:cover;vertical-align:middle;border-radius:3px;margin-top:3px;" title="Customer reference photo">` : '';
+      return imgHtml+`×${i.qty}`+refHtml;
+    }).join('<br>')}</td>
+    <td><strong>₹${o.total}</strong></td>
+    <td><span class="status-badge ${sc}">${o.status}</span></td>
+    <td>${o.date}</td>
+    ${actions?`<td><select onchange="updateOrderStatus('${o.id}',this.value)" style="padding:5px 8px;font-size:12px;border:1px solid var(--cream3);">${opts}</select></td>`:''}
+  </tr>`;
+}
+
+function renderProductsTable(){
+  const tbody=document.getElementById('productsTableBody');
+  if(!tbody) return;
+  if(state.products.length===0){ tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3);">No cakes yet. Click "+ Add New Cake" to get started.</td></tr>'; return; }
+  tbody.innerHTML=state.products.map(p=>{
+    const imgHtml = p.img ? `<img src="${p.img}" style="width:48px;height:36px;object-fit:cover;margin-right:10px;vertical-align:middle;">` : `<span style="font-size:22px;margin-right:8px;">${p.emoji||'🎂'}</span>`;
+    return `<tr>
+      <td>${imgHtml}<strong>${p.name}</strong></td>
+      <td>${p.category}</td>
+      <td>₹${p.basePrice}</td>
+      <td>${getFlavourNames(p.flavours).slice(0,3).join(', ')}${p.flavours.length>3?'…':''}</td>
+      <td>${p.weights.map(w=>w.w).join(', ')}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-outline btn-sm" onclick="openProductModal(${p.id})" style="margin-right:6px;">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})">Delete</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderOrdersTable(){
+  renderAdminOrderCards(state.orders);
+}
+
+function filterAdminOrders(){
+  var search = (document.getElementById('orderSearchInput')||{}).value||'';
+  var statusF = (document.getElementById('orderStatusFilter')||{}).value||'';
+  var filtered = state.orders.filter(function(o){
+    var matchSearch = !search ||
+      (o.id+'').toLowerCase().includes(search.toLowerCase()) ||
+      (o.customer.name||'').toLowerCase().includes(search.toLowerCase()) ||
+      (o.customer.phone||'').includes(search) ||
+      (o.customer.email||'').toLowerCase().includes(search.toLowerCase());
+    var matchStatus = !statusF || o.status===statusF;
+    return matchSearch && matchStatus;
+  });
+  renderAdminOrderCards(filtered);
+}
+
+function renderAdminOrderCards(orders){
+  var el = document.getElementById('adminOrderCards');
+  if(!el) return;
+  if(!orders||orders.length===0){
+    el.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--text3);"><div style="font-size:48px;margin-bottom:12px;">📦</div><div style="font-size:16px;font-weight:600;color:var(--brown);">No orders found</div></div>';
+    return;
+  }
+  var statusColors = {Pending:'#f0c040',Confirmed:'#3a9e6b',Delivered:'#4a7abf',Cancelled:'#c0392b'};
+  var statusBg = {Pending:'#fffbea',Confirmed:'#eafaf1',Delivered:'#eaf2ff',Cancelled:'#fdecea'};
+  el.innerHTML = orders.map(function(o){
+    var sc = statusColors[o.status]||'#888';
+    var sbg = statusBg[o.status]||'#f9f9f9';
+    var payBadge = o.paymentStatus==='Paid'
+      ? '<span style="background:#eafaf1;color:#2d9e6b;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">✓ Paid</span>'
+      : '<span style="background:#fffbea;color:#c9a84c;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">💵 COD</span>';
+    var opts = ['Pending','Confirmed','Delivered','Cancelled'].map(function(s){ return '<option'+(s===o.status?' selected':'')+'>'+s+'</option>'; }).join('');
+
+    var itemsHtml = (o.items||[]).map(function(item){
+      var imgHtml = '';
+      if(item.img && item.img.length>10){
+        imgHtml = '<img src="'+item.img+'" alt="'+item.name+'" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--cream3);flex-shrink:0;">';
+      } else {
+        imgHtml = '<div style="width:72px;height:72px;background:var(--cream2);border-radius:6px;border:1px solid var(--cream3);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;">'+(item.emoji||'🎂')+'</div>';
+      }
+      var refHtml = (item.refImg && item.refImg.length>10)
+        ? '<div style="margin-top:8px;display:flex;align-items:center;gap:6px;"><span style="font-size:11px;color:var(--text3);white-space:nowrap;">📎 Reference:</span><img src="'+item.refImg+'" alt="Ref" style="height:50px;width:70px;object-fit:cover;border-radius:4px;border:1px solid var(--cream3);cursor:pointer;" onclick="adminViewImg(\''+item.refImg+'\')"></div>'
+        : '';
+      return '<div style="display:flex;gap:14px;align-items:flex-start;padding:12px;background:#fff;border:1px solid var(--cream3);border-radius:6px;margin-bottom:8px;">'
+        + imgHtml
+        + '<div style="flex:1;min-width:0;">'
+        +   '<div style="font-weight:700;font-size:14px;color:var(--brown);margin-bottom:3px;">'+item.name+'</div>'
+        +   '<div style="font-size:12px;color:var(--text3);margin-bottom:2px;">🍰 Flavour: <strong style="color:var(--brown2);">'+(item.flavour||'—')+'</strong></div>'
+        +   '<div style="font-size:12px;color:var(--text3);margin-bottom:2px;">⚖️ Weight: <strong style="color:var(--brown2);">'+(item.weight||'—')+'</strong></div>'
+        +   '<div style="font-size:12px;color:var(--text3);margin-bottom:2px;">🔢 Qty: <strong style="color:var(--brown2);">'+item.qty+'</strong></div>'
+        +   (item.notes ? '<div style="font-size:12px;color:var(--text3);margin-top:4px;background:var(--cream2);padding:4px 8px;border-radius:4px;">📝 '+item.notes+'</div>' : '')
+        +   refHtml
+        + '</div>'
+        + '<div style="text-align:right;flex-shrink:0;"><div style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;color:var(--rose);">₹'+(item.price*item.qty)+'</div><div style="font-size:11px;color:var(--text3);">₹'+item.price+' each</div></div>'
+        + '</div>';
+    }).join('');
+
+    return '<div style="background:#fff;border:1px solid var(--cream3);border-radius:10px;margin-bottom:20px;overflow:hidden;box-shadow:0 2px 12px rgba(92,61,46,.07);">'
+      // Header bar
+      + '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:'+sbg+';border-bottom:1px solid var(--cream3);flex-wrap:wrap;gap:8px;">'
+      +   '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
+      +     '<span style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;color:var(--brown);">#'+o.id+'</span>'
+      +     '<span style="background:'+sc+';color:#fff;font-size:11px;font-weight:700;padding:3px 12px;border-radius:20px;">'+o.status+'</span>'
+      +     payBadge
+      +   '</div>'
+      +   '<div style="display:flex;align-items:center;gap:8px;">'
+      +     '<span style="font-size:12px;color:var(--text3);">'+o.date+'</span>'
+      +     '<select onchange="updateOrderStatus(\''+o.id+'\',this.value)" style="padding:5px 10px;font-size:12px;border:1.5px solid var(--cream3);background:#fff;font-family:inherit;border-radius:4px;cursor:pointer;">'+opts+'</select>'
+      +   '</div>'
+      + '</div>'
+      // Body
+      + '<div style="padding:18px 20px;">'
+      // Two-col: Customer + Delivery
+      +   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">'
+      // Customer info
+      +     '<div style="background:var(--cream2);padding:14px;border-radius:8px;">'
+      +       '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:8px;">👤 Customer</div>'
+      +       '<div style="font-weight:700;font-size:15px;color:var(--brown);margin-bottom:4px;">'+o.customer.name+'</div>'
+      +       (o.customer.phone ? '<div style="font-size:13px;color:var(--text2);margin-bottom:2px;">📞 '+o.customer.phone+'</div>' : '')
+      +       (o.customer.email ? '<div style="font-size:12px;color:var(--text3);">✉️ '+o.customer.email+'</div>' : '')
+      +     '</div>'
+      // Delivery info
+      +     '<div style="background:var(--cream2);padding:14px;border-radius:8px;">'
+      +       '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:8px;">📍 Delivery</div>'
+      +       '<div style="font-size:13px;color:var(--brown);font-weight:600;margin-bottom:4px;">'+(o.deliveryDate ? '📅 '+o.deliveryDate : '—')+'</div>'
+      +       '<div style="font-size:13px;color:var(--text2);line-height:1.5;">'+(o.address||'<em style="color:var(--text3);">No address provided</em>')+'</div>'
+      +       (o.note ? '<div style="font-size:12px;color:var(--text3);margin-top:6px;background:#fff;padding:4px 8px;border-radius:4px;">📝 '+o.note+'</div>' : '')
+      +     '</div>'
+      +   '</div>'
+      // Items
+      +   '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:10px;">🎂 Order Items</div>'
+      +   itemsHtml
+      // Totals
+      +   '<div style="display:flex;justify-content:flex-end;margin-top:8px;">'
+      +     '<div style="background:var(--cream2);padding:12px 20px;border-radius:8px;text-align:right;min-width:200px;">'
+      +       (o.deliveryCharge>0 ? '<div style="font-size:12px;color:var(--text3);display:flex;justify-content:space-between;gap:24px;margin-bottom:4px;"><span>Subtotal</span><span>₹'+o.subtotal+'</span></div>'
+        +'<div style="font-size:12px;color:var(--text3);display:flex;justify-content:space-between;gap:24px;margin-bottom:6px;"><span>Delivery</span><span>₹'+o.deliveryCharge+'</span></div>' : '')
+      +       '<div style="display:flex;justify-content:space-between;gap:24px;align-items:baseline;"><span style="font-size:13px;font-weight:700;color:var(--brown);">Total</span><span style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:700;color:var(--rose);">₹'+o.total+'</span></div>'
+      +       '<div style="margin-top:4px;font-size:11px;color:var(--text3);">'+(o.paymentMethod||'—')+'</div>'
+      +     '</div>'
+      +   '</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function adminViewImg(src){
+  var ov = document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;';
+  ov.onclick=function(){ document.body.removeChild(ov); };
+  ov.innerHTML='<img src="'+src+'" style="max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px;box-shadow:0 8px 48px rgba(0,0,0,.6);">';
+  document.body.appendChild(ov);
+}
+
+function renderCustomersTable(){
+  const tbody=document.getElementById('customersBody');
+  if(!tbody) return;
+  tbody.innerHTML=state.users.map(u=>{
+    const oc=state.orders.filter(o=>o.customer.phone===u.phone).length;
+    return `<tr><td><strong>${u.name}</strong></td><td>${u.phone||'—'}</td><td>${oc}</td><td>${u.joined||'—'}</td></tr>`;
+  }).join('')||'<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text3);">No customers yet</td></tr>';
+}
+
+function renderMyOrders(){
+  const el=document.getElementById('myOrdersList');
+  if(!state.currentUser){ el.innerHTML='<p style="color:var(--text3);text-align:center;padding:40px;">Please sign in to view your orders.</p>'; return; }
+  const mine=state.orders.filter(o=>o.customer.email===state.currentUser.email||o.customer.phone===state.currentUser.phone);
+  if(mine.length===0){ el.innerHTML=`<div style="text-align:center;padding:80px 20px;color:var(--text3);"><div style="font-size:56px;margin-bottom:14px;">📦</div><div style="font-size:18px;font-weight:600;color:var(--brown);margin-bottom:8px;">No orders yet</div><div><a onclick="showPage('shop')" style="color:var(--rose);cursor:pointer;">Browse our cakes →</a></div></div>`; return; }
+  el.innerHTML=mine.map(o=>`
+    <div class="order-card">
+      <div class="order-card-header">
+        <div><div class="order-id">Order #${o.id}</div><div class="order-date">${o.date} · Delivery: ${o.deliveryDate||'—'}</div></div>
+        <span class="status-badge status-${o.status.toLowerCase()}">${o.status}</span>
+      </div>
+      <div class="order-items-list">${o.items.map(i=>{
+        const imgHtml = i.img && i.img.length>10
+          ? `<img src="${i.img}" alt="${i.name}" style="width:60px;height:60px;object-fit:cover;border:1px solid var(--cream3);border-radius:4px;margin-right:10px;flex-shrink:0;">`
+          : `<span style="font-size:32px;margin-right:10px;">${i.emoji||'🎂'}</span>`;
+        const refHtml = i.refImg && i.refImg.length>10
+          ? `<div style="margin-top:6px;"><span style="font-size:11px;color:var(--text3);">Reference photo:</span><br><img src="${i.refImg}" alt="Reference" style="width:80px;height:60px;object-fit:cover;border:1px solid var(--cream3);border-radius:4px;margin-top:4px;"></div>`
+          : '';
+        return `<div class="order-item-row" style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--cream3);">${imgHtml}<div style="flex:1;"><div>${i.name} (${i.weight||''}, ${i.flavour||''}) × ${i.qty}</div>${refHtml}</div><span style="font-weight:600;color:var(--rose);">₹${i.price*i.qty}</span></div>`;
+      }).join('')}</div>
+      <div class="order-grand"><span>Total</span><span>₹${o.total}</span></div>
+      <div style="padding:10px 20px;font-size:12px;color:var(--text3);">📍 ${o.address||'—'} · 💳 ${o.paymentMethod||'—'} · <strong style="color:${o.paymentStatus==='Paid'?'#2d9e6b':'#c9a84c'}">${o.paymentStatus||'Pending'}</strong></div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════════════
+// ADMIN — PRODUCT FORM (with image upload)
+// ════════════════════════════════════════════════════
+let flavourRowCount = 0;
+let weightRowCount = 0;
+
+function addFlavourRow(){ addFlavourRowWith('','0'); }
+function addFlavourRowWith(fname, fextra, fimg){
+  const container = document.getElementById('flavourVariants');
+  const i = flavourRowCount++;
+  const row = document.createElement('div'); row.className='variant-row'; row.style.cssText='align-items:center;flex-wrap:wrap;gap:6px;padding:6px 0;';
+  const ps = (fimg&&fimg.length>5)?'display:block':'display:none';
+  const pi = (fimg&&fimg.length>5)?fimg:'';
+  row.innerHTML=`
+    <input type="text" placeholder="Flavour name e.g. Chocolate" id="fn${i}" value="${fname}" style="flex:2;min-width:130px;">
+    <div style="display:flex;align-items:center;gap:4px;min-width:110px;">
+      <span style="font-size:12px;color:var(--text3);white-space:nowrap;">Extra &#8377;</span>
+      <input type="number" placeholder="0" id="fe${i}" value="${fextra}" style="width:70px;" min="0">
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <img id="fip${i}" src="${pi}" style="${ps};width:36px;height:36px;object-fit:cover;border:1px solid var(--cream3);border-radius:2px;">
+      <label style="cursor:pointer;font-size:11px;color:var(--rose);border:1px solid var(--rose);padding:3px 7px;white-space:nowrap;">
+        &#128247; Photo<input type="file" accept="image/*" style="display:none" onchange="flavourImgUpload(this,${i})">
+      </label>
+      <input type="hidden" id="fi${i}" value="${pi}">
+    </div>
+    <button class="btn btn-danger btn-sm" onclick="removeFlavourRow(this)" style="flex-shrink:0;">&#10005;</button>`;
+  container.appendChild(row);
+}
+function flavourImgUpload(input,i){
+  const file=input.files[0];if(!file)return;
+  if(file.size>10*1024*1024){toast('Max 10MB');return;}
+  const r=new FileReader();
+  r.onload=function(e){
+    document.getElementById('fi'+i).value=e.target.result;
+    const p=document.getElementById('fip'+i);
+    p.src=e.target.result;p.style.display='block';
+  };
+  r.readAsDataURL(file);
+}
+function removeFlavourRow(btn){ btn.closest('.variant-row').remove(); }
+
+// ── FREE image hosting via ImgBB (no payment needed) ──
+// Get your free API key at: https://api.imgbb.com (sign up free → click "Get API Key")
+const IMGBB_API_KEY = '96204b0726eb8272dc63b7337adfa127';
+
+let _pendingImgFile = null;
+
+function handleImgUpload(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  if(file.size > 10*1024*1024){ toast('❌ Image too large. Max 10MB please.'); return; }
+  _pendingImgFile = file;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const dataUrl = e.target.result;
+    document.getElementById('apmImgData').value = dataUrl; // preview only
+    const preview = document.getElementById('imgPreview');
+    preview.src = dataUrl; preview.style.display = 'block';
+    const area = document.getElementById('imgUploadArea');
+    area.classList.add('has-img');
+    area.querySelector('.img-upload-inner').style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function uploadImageToImgBB(file){
+  // Convert file to base64 — ImgBB requires base64, NOT raw file
+  const base64 = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+  const formData = new FormData();
+  formData.append('image', base64);
+  formData.append('key', IMGBB_API_KEY);
+  const res = await fetch('https://api.imgbb.com/1/upload', {
+    method: 'POST', body: formData
+  });
+  if(!res.ok) throw new Error('Network error ' + res.status);
+  const json = await res.json();
+  if(!json.success) throw new Error('ImgBB: ' + (json.error?.message || JSON.stringify(json)));
+  const url = json.data?.url || json.data?.display_url;
+  if(!url) throw new Error('ImgBB returned no URL');
+  console.log('✅ ImgBB upload success:', url);
+  return url;
+}
+
+function removeImg(event){
+  event.stopPropagation();
+  _pendingImgFile = null;
+  document.getElementById('apmImgData').value = '';
+  document.getElementById('imgPreview').src = '';
+  document.getElementById('imgPreview').style.display = 'none';
+  document.getElementById('imgFileInput').value = '';
+  const area = document.getElementById('imgUploadArea');
+  area.classList.remove('has-img');
+  area.querySelector('.img-upload-inner').style.display='flex';
+}
+
+function openProductModal(id){
+  flavourRowCount = 0;
+  weightRowCount = 0;
+  _pendingImgFile = null;
+  document.getElementById('flavourVariants').innerHTML = '';
+  document.getElementById('weightVariants').innerHTML = '';
+
+  if(id){
+    const p = state.products.find(x=>Number(x.id)===Number(id));
+    if(!p) return;
+    document.getElementById('apmTitle').textContent = 'Edit Cake';
+    document.getElementById('apmId').value = id;
+    document.getElementById('apmName').value = p.name;
+    document.getElementById('apmCategory').value = p.category;
+    document.getElementById('apmEmoji').value = p.emoji||'🎂';
+    document.getElementById('apmBasePrice').value = p.basePrice;
+    document.getElementById('apmDesc').value = p.desc||'';
+    document.getElementById('apmBadge').value = p.badge||'';
+    // Image
+    if(p.img){
+      document.getElementById('apmImgData').value = p.img;
+      const preview=document.getElementById('imgPreview'); preview.src=p.img; preview.style.display='block';
+      const area=document.getElementById('imgUploadArea'); area.classList.add('has-img');
+      area.querySelector('.img-upload-inner').style.display='none';
+    } else { removeImg({stopPropagation:()=>{}}); }
+    // Flavours with prices
+    normFlavours(p.flavours).forEach(fl=>addFlavourRowWith(fl.f, fl.extra||0, fl.img||''));
+    (p.weights||[]).forEach(w=>addWeightRowWith(w.w, w.p));
+  } else {
+    document.getElementById('apmTitle').textContent = 'Add New Cake';
+    document.getElementById('apmId').value = '';
+    document.getElementById('apmName').value = '';
+    document.getElementById('apmCategory').value = 'Birthday';
+    document.getElementById('apmEmoji').value = '🎂';
+    document.getElementById('apmBasePrice').value = '';
+    document.getElementById('apmDesc').value = '';
+    document.getElementById('apmBadge').value = '';
+    removeImg({stopPropagation:()=>{}});
+    addFlavourRowWith('Chocolate','0');
+    addFlavourRowWith('Vanilla','0');
+    addWeightRowWith('0.5 kg', '');
+    addWeightRowWith('1 kg', '');
+  }
+  openModal('adminProductModal');
+}
+
+function addWeightRow(){ addWeightRowWith('',''); }
+function addWeightRowWith(wval, pval){
+  const container = document.getElementById('weightVariants');
+  const i = weightRowCount++;
+  const row = document.createElement('div'); row.className='variant-row';
+  row.innerHTML=`
+    <input type="text" placeholder="Weight e.g. 1 kg" id="wt${i}" value="${wval}" style="min-width:120px;">
+    <input type="number" placeholder="Price ₹ e.g. 850" id="wp${i}" value="${pval}" style="min-width:110px;" min="0">
+    <button class="btn btn-danger btn-sm" onclick="removeWeightRow(this)">✕ Remove</button>`;
+  container.appendChild(row);
+}
+function removeWeightRow(btn){ btn.closest('.variant-row').remove(); }
+
+async function saveProduct(){
+  const id = document.getElementById('apmId').value;
+  const name = document.getElementById('apmName').value.trim();
+  const emoji = document.getElementById('apmEmoji').value.trim();
+  const basePrice = parseInt(document.getElementById('apmBasePrice').value)||0;
+  const desc = document.getElementById('apmDesc').value.trim();
+  const category = document.getElementById('apmCategory').value;
+  const badge = document.getElementById('apmBadge').value.trim();
+  if(!name){ toast('❌ Please enter the cake name'); return; }
+  // Collect flavours (with optional per-flavour image)
+  const flavours = [];
+  document.querySelectorAll('#flavourVariants .variant-row').forEach(row=>{
+    const nameInp = row.querySelector('input[type=text]');
+    const extraInp = row.querySelector('input[type=number]');
+    const imgInp = row.querySelector('input[type=hidden]');
+    const f = nameInp?nameInp.value.trim():'';
+    const extra = parseInt(extraInp?extraInp.value:0)||0;
+    const img = imgInp?imgInp.value:'';
+    if(f) flavours.push({f, extra, img});
+  });
+  if(flavours.length===0){ toast('❌ Please add at least one flavour'); return; }
+  // Collect weights
+  const weights = [];
+  document.querySelectorAll('#weightVariants .variant-row').forEach(row=>{
+    const inputs = row.querySelectorAll('input');
+    const w = inputs[0].value.trim();
+    const p = parseInt(inputs[1].value)||0;
+    if(w && p>0) weights.push({w, p});
+  });
+  if(weights.length===0){ toast('❌ Please add at least one weight + price variant'); return; }
+  if(basePrice===0){ toast('❌ Please enter a base price'); return; }
+
+  const existing = id ? state.products.find(p=>Number(p.id)===Number(id)) : null;
+
+  // ── Upload new image to ImgBB (free, permanent) ──
+  let imgUrl = existing?.img || '';
+  if(_pendingImgFile){
+    try {
+      toast('⏳ Uploading image to ImgBB… please wait');
+      imgUrl = await uploadImageToImgBB(_pendingImgFile);
+      _pendingImgFile = null;
+      if(!imgUrl) throw new Error('Empty URL returned');
+      toast('✅ Image uploaded OK!');
+    } catch(e){
+      toast('❌ Image upload failed: ' + e.message);
+      console.error('Upload error:', e);
+      return;
+    }
+  } else if(!imgUrl) {
+    // no new file selected, no existing img — that's fine, emoji will show
+    console.log('No image selected, saving without image');
+  }
+
+  const product = {
+    id: id ? parseInt(id) : Date.now(),
+    name, emoji:emoji||'🎂', category, desc, basePrice, badge,
+    flavours, weights, img: imgUrl, _docId: existing?._docId||null
+  };
+  if(id){
+    const idx = state.products.findIndex(p=>Number(p.id)===Number(id));
+    if(idx>=0) state.products[idx] = product;
+  } else { state.products.push(product); }
+  await saveProductToFirestore(product);
+  saveProducts();
+  renderProductsTable(); renderAdminDashboard(); updateCategoryCounts();
+  renderFeatured(); renderShop();
+  closeModal('adminProductModal');
+  toast(`✅ "${name}" saved successfully!`);
+}
+
+async function deleteProduct(id){
+  if(!confirm('Delete this cake? This cannot be undone.')) return;
+  const p = state.products.find(x=>Number(x.id)===Number(id));
+  state.products = state.products.filter(x=>Number(x.id)!==Number(id));
+  if(window._fb && p?._docId){
+    try{ await window._fb.deleteDoc(window._fb.doc(window._fb.db,'products',p._docId)); }catch(e){ console.warn(e); }
+  }
+  saveProducts(); renderProductsTable(); renderAdminDashboard(); updateCategoryCounts(); renderFeatured(); renderShop();
+  toast('Cake deleted');
+}
+
+// ════════════════════════════════════════════════════
+// PAYMENT FLOW
+// ════════════════════════════════════════════════════
+// Shop coordinates — Bedra, Mangalore
+const SHOP_LAT = 12.8897; // approx Bedra, Mangalore
+const SHOP_LNG = 74.8432;
+
+let payState = {method:'razorpay', deliveryCharge:0};
+
+function openPaymentFlow(){
+  if(!state.currentUser){ state.afterLoginPage=null; goAuthStep(0); showPage('auth'); return; }
+  if(state.cart.length===0){ toast('Your cart is empty!'); return; }
+  payState.deliveryCharge = 0;
+  showPayPanel(0); selectPayMethod('razorpay');
+  const subtotal = state.cart.reduce((s,i)=>s+i.price*i.qty,0);
+  document.getElementById('payOrderItems').innerHTML = state.cart.map(i=>
+    `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--cream3);">
+      <span style="font-size:13px;">${i.emoji} ${i.name} × ${i.qty}</span><span style="font-size:13px;">₹${i.price*i.qty}</span>
+    </div>`).join('');
+  updatePayTotals(subtotal, 0);
+  if(state.currentUser?.name) document.getElementById('py-name').value = state.currentUser.name;
+  // Auto-fill phone from saved profile or previous order
+  var savedPhone = '';
+  if(state.currentUser?.email){
+    savedPhone = loadLS('cs_phone_'+state.currentUser.email, '');
+    if(!savedPhone){
+      // Try to find from past orders
+      var pastOrder = state.orders.find(function(o){ return o.customer.email===state.currentUser.email && o.customer.phone; });
+      if(pastOrder) savedPhone = pastOrder.customer.phone;
+    }
+  }
+  var phoneEl = document.getElementById('py-phone');
+  if(phoneEl) phoneEl.value = savedPhone || '';
+  document.getElementById('deliveryInfo').style.display='none';
+  // Reset address autocomplete
+  var _si=document.getElementById('addrSearchInput'); if(_si) _si.value='';
+  var _sw=document.getElementById('addrSelectedWrap'); if(_sw) _sw.style.display='none';
+  var _am=document.getElementById('addrMiniMap'); if(_am) _am.style.display='none';
+  document.getElementById('py-address').value='';
+  var _dd=document.getElementById('addrDropdown'); if(_dd){ _dd.innerHTML=''; _dd.style.display='none'; }
+  var _db=document.getElementById('addrTypeDetect'); if(_db){ _db.style.borderColor=''; _db.style.color=''; _db.style.background=''; _db.textContent='\uD83D\uDCCD My Location'; _db.disabled=false; }
+  _addrSelectedLat=null; _addrSelectedLng=null;
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+  document.getElementById('py-date').min = tomorrow.toISOString().split('T')[0];
+  openModal('paymentModal');
+}
+
+function updatePayTotals(subtotal, deliveryCharge){
+  const total = subtotal + deliveryCharge;
+  const delivRow = document.getElementById('payDeliveryRow');
+  if(deliveryCharge>0){
+    if(!delivRow){
+      const el=document.createElement('div');
+      el.id='payDeliveryRow';
+      el.style.cssText='display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:var(--text3);';
+      el.innerHTML=`<span>Delivery charge</span><span id="payDeliveryAmt">₹${deliveryCharge}</span>`;
+      document.getElementById('payOrderItems').after(el);
+    } else {
+      document.getElementById('payDeliveryAmt').textContent='₹'+deliveryCharge;
+      delivRow.style.display='flex';
+    }
+  } else if(delivRow){ delivRow.style.display='none'; }
+  document.getElementById('payOrderTotal').textContent = '₹'+total;
+  document.getElementById('payAmountBadge').textContent = '₹'+total;
+  document.getElementById('rzpAmtBtn').textContent = total;
+  document.getElementById('rzpBoxAmount').textContent = '₹'+total;
+  document.getElementById('codAmount').textContent = '₹'+total;
+}
+
+function drawQR(){
+  const qr = document.getElementById('upiQrCode'); if(!qr) return;
+  const size=9; const seed=YOUR_UPI_ID.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  let html=`<div style="display:grid;grid-template-columns:repeat(${size},1fr);gap:1px;padding:6px;width:100%;height:100%;">`;
+  for(let i=0;i<size*size;i++){
+    const r=Math.floor(i/size),cv=i%size;
+    const isCorner=(r<3&&cv<3)||(r<3&&cv>=size-3)||(r>=size-3&&cv<3);
+    const val=isCorner||((seed*i*7+i*13)%17<9);
+    html+=`<div style="background:${val?'#5c3d2e':'transparent'};border-radius:1px;"></div>`;
+  }
+  qr.innerHTML=html+'</div>';
+}
+
+function showPayPanel(n){
+  document.querySelectorAll('.pay-panel').forEach((p,i)=>p.classList.toggle('active',i===n));
+  ['pstep0','pstep1','pstep2'].forEach((id,i)=>{
+    const el=document.getElementById(id); el.classList.remove('active','done');
+    if(i<n) el.classList.add('done'); if(i===n) el.classList.add('active');
+  });
+}
+
+function selectPayMethod(m){
+  payState.method = m;
+  ['razorpay','cod'].forEach(id=>{
+    const el=document.getElementById('pm-'+id); if(el) el.classList.toggle('selected',id===m);
+    const sec=document.getElementById('section-'+id); if(sec) sec.classList.toggle('active',id===m);
+  });
+}
+
+function payStep1(){
+  const name=document.getElementById('py-name').value.trim();
+  const phone=document.getElementById('py-phone').value.trim();
+  const address=document.getElementById('py-address').value.trim();
+  const date=document.getElementById('py-date').value;
+  if(!name){ toast('Please enter your name'); return; }
+  if(!phone){ toast('Please enter your phone number'); return; }
+  if(!address){ toast('Please enter your delivery address'); return; }
+  if(!date){ toast('Please select a delivery date'); return; }
+  showPayPanel(1);
+}
+function payGoBack(){ showPayPanel(0); }
+
+// ════════════════════════════════════════════════════
+// DELIVERY DISTANCE & CHARGES
+// ════════════════════════════════════════════════════
+function calcDeliveryCharge(km){
+  if(km <= 3) return 0;
+  if(km <= 4) return 100;
+  return 100 + Math.ceil(km - 4) * 15;
+}
+
+function haversineKm(lat1,lng1,lat2,lng2){
+  const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+// ═══════════════════════════════════════════
+// ADDRESS AUTOCOMPLETE (Nominatim / OpenStreetMap)
+// ═══════════════════════════════════════════
+var _addrTimer = null;
+var _addrSelectedLat = null;
+var _addrSelectedLng = null;
+
+function addrSearchTyping(){
+  clearTimeout(_addrTimer);
+  var q = (document.getElementById('addrSearchInput')||{}).value||'';
+  if(q.length < 3){ closeAddrDropdown(); return; }
+  _addrTimer = setTimeout(function(){ addrFetchSuggestions(q); }, 350);
+}
+
+function addrFetchSuggestions(q){
+  var dropdown = document.getElementById('addrDropdown');
+  if(!dropdown) return;
+  dropdown.innerHTML = '<div style="padding:12px 16px;font-size:13px;color:var(--text3);">⏳ Searching…</div>';
+  dropdown.style.display = 'block';
+
+  // Always bias towards Mangalore — search with "Mangalore" appended first
+  var qMang = q.toLowerCase().includes('mangalore') ? q : q + ' Mangalore';
+  var url = 'https://api.locationiq.com/v1/autocomplete?'
+    + 'key=' + LOCATIONIQ_KEY
+    + '&q=' + encodeURIComponent(qMang)
+    + '&limit=8&countrycodes=in'
+    + '&lat=12.8697&lon=74.8432'
+    + '&zoom=14'
+    + '&dedupe=1&normalizecity=1&accept-language=en';
+  // Also run plain search in parallel for broader results
+  var urlPlain = 'https://api.locationiq.com/v1/autocomplete?'
+    + 'key=' + LOCATIONIQ_KEY
+    + '&q=' + encodeURIComponent(q)
+    + '&limit=5&countrycodes=in'
+    + '&lat=12.8697&lon=74.8432'
+    + '&zoom=14'
+    + '&dedupe=1&normalizecity=1&accept-language=en';
+
+  var MANG_LAT=12.8697, MANG_LNG=74.8432;
+
+  function fetchJSON(u){ return fetch(u).then(function(r){return r.json();}).catch(function(){return [];}); }
+
+  Promise.all([fetchJSON(url), fetchJSON(urlPlain)]).then(function(allRes){
+    // Merge results, deduplicate by display_name
+    var seen = {};
+    var combined = [];
+    (allRes[0].concat(allRes[1]||[])).forEach(function(r){
+      if(r && !r.error && !seen[r.display_name]){
+        seen[r.display_name] = true;
+        combined.push(r);
+      }
+    });
+    var results = combined;
+
+    if(!results || results.length===0){
+      dropdown.innerHTML = '<div style="padding:16px;font-size:13px;color:var(--text3);text-align:center;"><div style="font-size:22px;">🔍</div><strong>No results.</strong><br><span style="font-size:12px;">Try e.g. "Vijayanagara Mangalore"</span></div>';
+      return;
+    }
+    // Sort: closest to Mangalore first
+    results.sort(function(a,b){
+      var da=Math.sqrt(Math.pow((+a.lat)-MANG_LAT,2)+Math.pow((+a.lon)-MANG_LNG,2));
+      var db=Math.sqrt(Math.pow((+b.lat)-MANG_LAT,2)+Math.pow((+b.lon)-MANG_LNG,2));
+      return da-db;
+    });
+      function getIcon(type,cls){
+        var t=((type||'')+(cls||'')).toLowerCase();
+        if(t.match(/restaurant|cafe|bakery|food/)) return '🍽️';
+        if(t.match(/shop|store|market|mall/)) return '🏪';
+        if(t.match(/hospital|clinic|pharmacy/)) return '🏥';
+        if(t.match(/school|college|university/)) return '🏫';
+        if(t.match(/hotel|lodge/)) return '🏨';
+        if(t.match(/road|street|highway/)) return '🛣️';
+        if(t.match(/bank|atm/)) return '🏦';
+        if(t.match(/temple|church|mosque/)) return '⛪';
+        if(t.match(/locality|suburb|village|town|city/)) return '🏘️';
+        return '📍';
+      }
+      var h=results.map(function(r){
+        var addr=r.address||{};
+        var main=r.display_place||addr.name||r.display_name.split(',')[0];
+        var sub=[addr.road||addr.street,addr.suburb||addr.village||addr.town||addr.city,addr.state].filter(Boolean).join(', ');
+        var icon=getIcon(r.type,r.class);
+        return '<div class="addr-result-item" data-lat="'+r.lat+'" data-lng="'+r.lon+'" data-name="'+encodeURIComponent(r.display_name)+'"'
+          +' style="padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--cream3);display:flex;gap:10px;align-items:flex-start;background:#fff;"'
+          +' onmouseover="this.style.background=\'var(--cream2)\'" onmouseout="this.style.background=\'#fff\'">'
+          +'<span style="font-size:18px;flex-shrink:0;margin-top:2px;">'+icon+'</span>'
+          +'<div style="min-width:0;">'
+          +'<div style="font-size:13px;font-weight:600;color:var(--brown);line-height:1.3;">'+main+'</div>'
+          +(sub?'<div style="font-size:11px;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+sub+'</div>':'')
+          +'</div></div>';
+      }).join('');
+      dropdown.innerHTML=h;
+      dropdown.querySelectorAll('.addr-result-item').forEach(function(el){
+        el.addEventListener('click',function(){
+          selectAddrResult(this.getAttribute('data-lat'),this.getAttribute('data-lng'),decodeURIComponent(this.getAttribute('data-name')));
+        });
+      });
+    })
+    .catch(function(){ dropdown.innerHTML='<div style="padding:14px;font-size:13px;color:var(--rose);">Search failed. Check internet.</div>'; });
+}
+
+
+function selectAddrResult(lat, lng, displayName){
+  _addrSelectedLat = parseFloat(lat);
+  _addrSelectedLng = parseFloat(lng);
+  // Fill hidden field + show selected
+  document.getElementById('py-address').value = displayName;
+  var si = document.getElementById('addrSearchInput');
+  // Show first 3 meaningful parts in the search box
+  var shortName = displayName.split(',').slice(0,3).map(function(s){ return s.trim(); }).join(', ');
+  if(si) si.value = shortName;
+  var sw = document.getElementById('addrSelectedWrap');
+  var st = document.getElementById('addrSelectedText');
+  if(sw) sw.style.display = 'block';
+  if(st) st.textContent = displayName;
+  closeAddrDropdown();
+  // Show mini map
+  showAddrMiniMap(lat, lng, displayName.split(',')[0]);
+  // Calculate delivery charge
+  var km = haversineKm(SHOP_LAT, SHOP_LNG, parseFloat(lat), parseFloat(lng));
+  var charge = calcDeliveryCharge(km);
+  payState.deliveryCharge = charge;
+  var subtotal = state.cart.reduce(function(s,i){ return s+i.price*i.qty; },0);
+  updatePayTotals(subtotal, charge);
+  document.getElementById('deliveryInfo').style.display = 'block';
+  document.getElementById('deliveryDistText').textContent = '📍 ' + km.toFixed(1) + ' km from shop';
+  var tag = document.getElementById('deliveryChargeTag');
+  var note = document.getElementById('deliveryChargeNote');
+  if(charge===0){
+    tag.textContent='FREE Delivery 🎉'; tag.style.cssText='padding:3px 10px;font-size:12px;font-weight:700;border-radius:20px;background:#d4f0de;color:#2d8a56;';
+    note.textContent='You are within 3 km — free delivery!';
+  } else {
+    tag.textContent='Delivery: ₹'+charge; tag.style.cssText='padding:3px 10px;font-size:12px;font-weight:700;border-radius:20px;background:#fce4dc;color:var(--rose-dark);';
+    note.textContent=km<=4?'Within 4 km — flat ₹100 delivery charge.':km.toFixed(1)+' km away — ₹100 base + ₹'+Math.ceil(km-4)*15+' extra (₹15/km beyond 4 km).';
+  }
+}
+
+function showAddrMiniMap(lat, lng, label){
+  var wrap = document.getElementById('addrMiniMap');
+  if(!wrap) return;
+  wrap.style.display = 'block';
+  var midLat = (SHOP_LAT + parseFloat(lat))/2;
+  var midLng = (SHOP_LNG + parseFloat(lng))/2;
+  var km = haversineKm(SHOP_LAT, SHOP_LNG, parseFloat(lat), parseFloat(lng));
+  var zoom = km<1?15:km<3?13:km<7?12:11;
+  wrap.innerHTML = '<iframe width="100%" height="160" frameborder="0" scrolling="no"'
+    + ' src="https://www.openstreetmap.org/export/embed.html?bbox='+(midLng-0.05)+','+(midLat-0.04)+','+(midLng+0.05)+','+(midLat+0.04)+'&layer=mapnik&marker='+lat+','+lng+'"'
+    + ' style="border:none;display:block;"></iframe>'
+    + '<div style="font-size:11px;padding:4px 8px;background:var(--cream2);color:var(--text3);display:flex;justify-content:space-between;">'
+    + '<span>&#127968; Your location: '+label+'</span><span>&#127978; Shop: Bedra, Mangalore</span></div>';
+}
+
+function clearSelectedAddr(){
+  document.getElementById('py-address').value = '';
+  _addrSelectedLat = null; _addrSelectedLng = null;
+  var si = document.getElementById('addrSearchInput'); if(si){ si.value=''; si.focus(); }
+  var sw = document.getElementById('addrSelectedWrap'); if(sw) sw.style.display='none';
+  var am = document.getElementById('addrMiniMap'); if(am) am.style.display='none';
+  document.getElementById('deliveryInfo').style.display='none';
+  payState.deliveryCharge = 0;
+  var subtotal = state.cart.reduce(function(s,i){ return s+i.price*i.qty; },0);
+  updatePayTotals(subtotal, 0);
+}
+
+function closeAddrDropdown(){
+  var d = document.getElementById('addrDropdown');
+  if(d) d.style.display='none';
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e){
+  var wrap = document.getElementById('addrSearchWrap');
+  if(wrap && !wrap.contains(e.target)) closeAddrDropdown();
+});
+
+function setAddrMode(mode){
+  if(mode==='detect'){
+    var detectBtn = document.getElementById('addrTypeDetect');
+    if(detectBtn){ detectBtn.style.borderColor='var(--rose)'; detectBtn.style.color='var(--rose)'; detectBtn.style.background='var(--rose3)'; }
+    detectDeliveryLocation();
+  }
+}
+
+function detectDeliveryLocation(){
+  var detectBtn = document.getElementById('addrTypeDetect');
+  if(!navigator.geolocation){ toast('❌ Location not supported by your browser'); return; }
+  if(detectBtn){ detectBtn.textContent='📡 Detecting…'; detectBtn.disabled=true; }
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat = pos.coords.latitude, lng = pos.coords.longitude;
+    // Reverse geocode to get human-readable address
+    fetch('https://us1.locationiq.com/v1/reverse?key='+LOCATIONIQ_KEY+'&lat='+lat+'&lon='+lng+'&format=json&accept-language=en')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var displayName = data.display_name || (lat.toFixed(5)+', '+lng.toFixed(5));
+        selectAddrResult(lat, lng, displayName);
+        var si = document.getElementById('addrSearchInput');
+        if(si) si.value = displayName.split(',').slice(0,3).join(',');
+        if(detectBtn){ detectBtn.textContent='📍 My Location'; detectBtn.disabled=false; detectBtn.style.borderColor='var(--rose)'; detectBtn.style.color='var(--rose)'; detectBtn.style.background='var(--rose3)'; }
+        toast('📍 Location detected!');
+      })
+      .catch(function(){
+        var fallback = lat.toFixed(5)+', '+lng.toFixed(5);
+        selectAddrResult(lat, lng, fallback);
+        if(detectBtn){ detectBtn.textContent='📍 My Location'; detectBtn.disabled=false; }
+      });
+  }, function(err){
+    if(detectBtn){ detectBtn.textContent='📍 My Location'; detectBtn.disabled=false; detectBtn.style.borderColor=''; detectBtn.style.color=''; detectBtn.style.background=''; }
+    toast('❌ Could not get your location. Please allow location access.');
+  }, {timeout:12000, enableHighAccuracy:true});
+}
+
+function showDeliveryMap(custLat, custLng, km){
+  document.getElementById('deliveryMapWrap').style.display='block';
+  const mapEl=document.getElementById('deliveryMap');
+  mapEl.innerHTML='';
+  // Use free OpenStreetMap iframe embed
+  const midLat=(SHOP_LAT+custLat)/2, midLng=(SHOP_LNG+custLng)/2;
+  const zoom = km<1?15:km<3?13:km<7?12:11;
+  mapEl.innerHTML=`<iframe
+    width="100%" height="180" frameborder="0" scrolling="no"
+    src="https://www.openstreetmap.org/export/embed.html?bbox=${midLng-0.04},${midLat-0.03},${midLng+0.04},${midLat+0.03}&layer=mapnik&marker=${custLat},${custLng}"
+    style="border:none;"></iframe>
+    <div style="font-size:11px;text-align:right;padding:2px 4px;background:#f5ede0;color:#8a6a58;">
+      🏪 Shop: Bedra, Mangalore &nbsp;|&nbsp; 📍 Your location detected
+    </div>`;
+}
+
+function processRazorpay(){
+  const subtotal=state.cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const total=subtotal+(payState.deliveryCharge||0);
+  if(!window.Razorpay){ toast('❌ Razorpay not loaded. Check internet connection.'); return; }
+  if(RAZORPAY_KEY_ID==='rzp_test_PASTE_YOUR_KEY_HERE'){ toast('❌ Paste your Razorpay Key ID in the code first!'); return; }
+  const name=document.getElementById('py-name').value.trim();
+  const phone=document.getElementById('py-phone').value.trim();
+  const rzp = new window.Razorpay({
+    key: RAZORPAY_KEY_ID,
+    amount: total*100, currency:'INR',
+    name:'Chandradeepa Home Made Cakes', description:'Cake Order',
+    handler: function(resp){ finaliseOrder('Razorpay · '+resp.razorpay_payment_id); },
+    prefill:{name,contact:phone},
+    notes:{address:document.getElementById('py-address').value},
+    theme:{color:'#c4756a'},
+    modal:{ondismiss:()=>toast('Payment cancelled')}
+  });
+  rzp.on('payment.failed',r=>toast('❌ Payment failed: '+r.error.description));
+  rzp.open();
+}
+
+function processCOD(){
+  showPayPanel(2);
+  document.getElementById('payProcessing').classList.remove('hidden');
+  document.getElementById('paySuccessPanel').classList.add('hidden');
+  document.getElementById('processingMsg').textContent='Placing your order…';
+  setTimeout(()=>finaliseOrder('Cash on Delivery'), 1000);
+}
+
+async function finaliseOrder(payMethod){
+  const name=document.getElementById('py-name').value.trim();
+  const phone=document.getElementById('py-phone').value.trim();
+  const address=document.getElementById('py-address').value.trim();
+  const date=document.getElementById('py-date').value;
+  const note=document.getElementById('py-note').value;
+  const subtotal=state.cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const deliveryCharge=payState.deliveryCharge||0;
+  const total=subtotal+deliveryCharge;
+  const orderId='CS'+Date.now().toString().slice(-6);
+  const order={
+    id:orderId, customer:{name,phone,email:state.currentUser?.email||''},
+    items:[...state.cart], subtotal, deliveryCharge, total, address, deliveryDate:date, note,
+    paymentMethod:payMethod, paymentStatus:payMethod.startsWith('Cash')?'Pay on Delivery':'Paid',
+    status:'Confirmed', date:new Date().toLocaleDateString(), timestamp:Date.now()
+  };
+  if(window._fb){ try{ await window._fb.addDoc(window._fb.collection(window._fb.db,'orders'),order); }catch(e){ console.error(e); } }
+  state.orders.unshift(order); saveOrders();
+  // Remember phone for next time
+  if(phone && state.currentUser?.email) saveLS('cs_phone_'+state.currentUser.email, phone);
+  state.cart=[]; saveCart(); updateCartUI();
+  showPayPanel(2);
+  document.getElementById('payProcessing').classList.add('hidden');
+  document.getElementById('paySuccessPanel').classList.remove('hidden');
+  document.getElementById('successOrderId').textContent='#'+orderId;
+  document.getElementById('successPayMethod').textContent=payMethod;
+  document.getElementById('successAmount').textContent='₹'+total;
+}
+
+// ════════════════════════════════════════════════════
+// FIRESTORE SYNC
+// ════════════════════════════════════════════════════
+async function loadFirestoreOrders(){
+  if(!window._fb) return;
+  try {
+    const q=window._fb.query(window._fb.collection(window._fb.db,'orders'),window._fb.orderBy('timestamp','desc'));
+    const snap=await window._fb.getDocs(q);
+    state.orders=snap.docs.map(d=>({...d.data(),_docId:d.id}));
+    saveOrders(); renderAdminDashboard(); renderOrdersTable(); filterAdminOrders();
+  } catch(e){ console.warn('Firestore orders error:',e); }
+}
+
+async function loadFirestoreProducts(){
+  if(!window._fb) return;
+  try {
+    const snap=await window._fb.getDocs(window._fb.collection(window._fb.db,'products'));
+    if(!snap.empty){
+      state.products=snap.docs.map(d=>({...d.data(),_docId:d.id}));
+      saveProducts(); renderFeatured(); renderShop(); updateCategoryCounts();
+    }
+  } catch(e){ console.warn('Firestore products error:',e); }
+}
+
+async function saveProductToFirestore(product){
+  if(!window._fb) return;
+  try {
+    if(product._docId) await window._fb.setDoc(window._fb.doc(window._fb.db,'products',product._docId),product);
+    else {
+      const ref=await window._fb.addDoc(window._fb.collection(window._fb.db,'products'),product);
+      product._docId=ref.id;
+    }
+  } catch(e){ console.warn('Firestore product save error:',e); }
+}
+
+async function updateOrderStatus(id, status){
+  const o=state.orders.find(x=>Number(x.id)===Number(id)); if(!o) return;
+  o.status=status; saveOrders();
+  if(window._fb&&o._docId){ try{ await window._fb.updateDoc(window._fb.doc(window._fb.db,'orders',o._docId),{status}); }catch(e){ console.warn(e); } }
+  toast('Order #'+id+' → '+status);
+}
+
+window.addEventListener('fbReady',()=>{ loadFirestoreProducts(); });
+
+// ════════════════════════════════════════════════════
+// SETTINGS FUNCTIONS
+// ════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════
+// BUILDER — CANVAS CAKE PREVIEW
+// ════════════════════════════════════════════════════
+var CAKE_PALETTES = {
+  'Chocolate':   {body:'#5c3317',cream:'#f5e8d0',plate:'#d4a574',accent:'#3d1f0a',decor:'#c8a060',hi:'#a0622a'},
+  'Vanilla':     {body:'#f0ddb8',cream:'#fffaee',plate:'#e8d090',accent:'#c09830',decor:'#e8c878',hi:'#fff0c0'},
+  'Red Velvet':  {body:'#8b1a1a',cream:'#fff5f5',plate:'#f0c0c0',accent:'#5c0f0f',decor:'#f8a8a8',hi:'#d44040'},
+  'Butterscotch':{body:'#c8820a',cream:'#fff0b0',plate:'#f0c040',accent:'#8b5e00',decor:'#f5d860',hi:'#f0a820'},
+  'Mango':       {body:'#f59020',cream:'#fffbd0',plate:'#f8d050',accent:'#c07000',decor:'#ffd040',hi:'#ffe080'},
+  'Pineapple':   {body:'#d8c820',cream:'#fdfce0',plate:'#e8d800',accent:'#909000',decor:'#f0e840',hi:'#fffb88'},
+  'Strawberry':  {body:'#c82040',cream:'#fff0f2',plate:'#f8b0c0',accent:'#800020',decor:'#f4a0b8',hi:'#ff6080'},
+  'Blueberry':   {body:'#3838a0',cream:'#f0f0ff',plate:'#a0a0e0',accent:'#1c1c80',decor:'#c0c0f8',hi:'#8080d0'},
+  'default':     {body:'#c4756a',cream:'#fdf0e8',plate:'#e0b090',accent:'#7a3a30',decor:'#e8c0a8',hi:'#d49080'}
+};
+
+function _getCakePalette(flavour){
+  return CAKE_PALETTES[flavour||''] || CAKE_PALETTES['default'];
+}
+
+function _shade(hex,pct){
+  if(!hex||hex[0]!=='#') return '#888888';
+  var h=hex.slice(1);
+  if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  var r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);
+  r=Math.min(255,Math.max(0,r+Math.round(2.55*pct)));
+  g=Math.min(255,Math.max(0,g+Math.round(2.55*pct)));
+  b=Math.min(255,Math.max(0,b+Math.round(2.55*pct)));
+  return '#'+[r,g,b].map(function(v){return v.toString(16).padStart(2,'0');}).join('');
+}
+
+function _drawEllipse(ctx,x,y,rx,ry,fill,stroke){
+  ctx.beginPath(); ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);
+  if(fill){ctx.fillStyle=fill;ctx.fill();}
+  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();}
+}
+
+function _drawRosette(ctx,x,y,r,fill){
+  for(var k=0;k<6;k++){
+    var a=(k/6)*Math.PI*2;
+    ctx.beginPath();
+    ctx.ellipse(x+Math.cos(a)*r*0.55,y+Math.sin(a)*r*0.4,r*0.48,r*0.32,a,0,Math.PI*2);
+    ctx.fillStyle=fill;ctx.fill();
+  }
+  ctx.beginPath();ctx.arc(x,y,r*0.36,0,Math.PI*2);
+  ctx.fillStyle=_shade(fill,8);ctx.fill();
+}
+
+function drawCakeCanvas(){
+  var canvas=document.getElementById('cakeCanvas');
+  if(!canvas) return;
+  var ctx=canvas.getContext('2d');
+  var W=240,H=260;
+  ctx.clearRect(0,0,W,H);
+
+  var tiers=state.builder.tiers||1;
+  var flavour=state.builder.flavour||'Vanilla';
+  var pal=_getCakePalette(flavour);
+
+  // Soft background
+  var bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#fff9f5');bg.addColorStop(1,'#fef2ea');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  // Cake board
+  var bx=W/2,by=H-14,brx=100,bry=10;
+  var bGrd=ctx.createLinearGradient(bx-brx,by,bx+brx,by);
+  bGrd.addColorStop(0,'#c89810');bGrd.addColorStop(0.5,'#f8e060');bGrd.addColorStop(1,'#c89810');
+  _drawEllipse(ctx,bx,by,brx+4,bry+4,bGrd,'#b08000');
+
+  // Tier config
+  var TH=[78,60,48,38],TW=[148,112,86,66];
+  var totalH=0;
+  for(var t=0;t<tiers;t++) totalH+=TH[t];
+  var baseY=H-28;
+  var curY=baseY;
+
+  // Draw tiers from bottom to top
+  for(var t=0;t<tiers;t++){
+    var th=TH[t],tw=TW[t];
+    var tx=W/2;
+    var ty=curY-th;
+
+    // Drop shadow
+    ctx.save();ctx.globalAlpha=0.1;
+    _drawEllipse(ctx,tx+3,curY+6,tw/2,8,'#2a1008');
+    ctx.restore();
+
+    // Side face (trapezoid)
+    var bw=tw,topw=tw-6;
+    ctx.beginPath();
+    ctx.moveTo(tx-bw/2+4,curY);
+    ctx.lineTo(tx+bw/2-4,curY);
+    ctx.lineTo(tx+topw/2,ty);
+    ctx.lineTo(tx-topw/2,ty);
+    ctx.closePath();
+    var sideG=ctx.createLinearGradient(tx-bw/2,ty,tx+bw/2,curY);
+    sideG.addColorStop(0,_shade(pal.body,-25));
+    sideG.addColorStop(0.3,pal.body);
+    sideG.addColorStop(0.7,pal.body);
+    sideG.addColorStop(1,_shade(pal.body,-18));
+    ctx.fillStyle=sideG;ctx.fill();
+    ctx.strokeStyle=_shade(pal.body,-35);ctx.lineWidth=0.8;ctx.stroke();
+
+    // Cream drizzle line near bottom of tier
+    ctx.save();ctx.globalAlpha=0.55;
+    ctx.strokeStyle=pal.cream;ctx.lineWidth=2.5;
+    ctx.beginPath();
+    var numDrip=Math.floor(tw/22);
+    for(var d=0;d<numDrip;d++){
+      var dx=tx-bw/2+16+d*(bw-26)/(numDrip-1||1);
+      ctx.moveTo(dx,curY-8);
+      ctx.quadraticCurveTo(dx+4,curY-2,dx,curY+3);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // Bottom ellipse edge
+    _drawEllipse(ctx,tx,curY,bw/2-4,10,pal.cream,_shade(pal.cream,-20));
+
+    // Rosettes along bottom edge
+    var numBot=Math.max(4,Math.floor((bw-20)/18));
+    for(var r=0;r<numBot;r++){
+      var a=(-Math.PI/2-0.3)+(r/(numBot-1||1))*(Math.PI+0.6);
+      _drawRosette(ctx,tx+Math.cos(a)*(bw/2-8),curY+Math.sin(a)*8,5,pal.cream);
+    }
+
+    // Top ellipse (cream surface)
+    var topG=ctx.createRadialGradient(tx-tw/5,ty-4,2,tx,ty,topw/2);
+    topG.addColorStop(0,'#ffffff');
+    topG.addColorStop(0.5,pal.cream);
+    topG.addColorStop(1,_shade(pal.cream,-10));
+    _drawEllipse(ctx,tx,ty,topw/2,13,topG,_shade(pal.cream,-22));
+
+    // Rosettes along top edge
+    var numTop=Math.max(4,Math.floor((topw-16)/16));
+    for(var r=0;r<numTop;r++){
+      var a2=(r/(numTop||1))*Math.PI*2;
+      _drawRosette(ctx,tx+Math.cos(a2)*(topw/2-5),ty+Math.sin(a2)*9,5,_shade(pal.cream,5));
+    }
+
+    // Gold bead accents
+    var numBead=Math.max(4,Math.floor((topw-16)/20));
+    for(var b2=0;b2<numBead;b2++){
+      var ab=(b2/(numBead||1))*Math.PI*2+0.3;
+      var bx2=tx+Math.cos(ab)*(topw/2-10);
+      var by2=ty+Math.sin(ab)*9;
+      var bGrd2=ctx.createRadialGradient(bx2-0.8,by2-0.8,0.4,bx2,by2,2.8);
+      bGrd2.addColorStop(0,'#fffac0');bGrd2.addColorStop(1,'#c89010');
+      ctx.beginPath();ctx.arc(bx2,by2,2.8,0,Math.PI*2);
+      ctx.fillStyle=bGrd2;ctx.fill();
+    }
+
+    // Decorative swirl on top surface
+    if(t===tiers-1){
+      ctx.save();ctx.globalAlpha=0.35;
+      ctx.strokeStyle=pal.decor;ctx.lineWidth=1.5;ctx.lineCap='round';
+      ctx.beginPath();
+      ctx.moveTo(tx-18,ty-2);
+      ctx.bezierCurveTo(tx-8,ty-11,tx+8,ty+3,tx+20,ty-4);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(tx-14,ty+5);
+      ctx.bezierCurveTo(tx-4,ty-2,tx+10,ty+7,tx+18,ty+2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    curY=ty;
+  }
+
+  // Candle on top tier
+  var topTx=W/2, topTy=curY;
+  // Candle stick
+  ctx.save();
+  var candleH=20,candleW=5;
+  var cg=ctx.createLinearGradient(topTx-candleW,topTy,topTx+candleW,topTy);
+  cg.addColorStop(0,_shade(pal.accent,30));cg.addColorStop(0.5,pal.hi);cg.addColorStop(1,pal.accent);
+  ctx.fillStyle=cg;
+  ctx.fillRect(topTx-candleW/2,topTy-candleH,candleW,candleH);
+  // Wick
+  ctx.strokeStyle='#222';ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.moveTo(topTx,topTy-candleH);ctx.lineTo(topTx,topTy-candleH-5);ctx.stroke();
+  // Flame
+  var fg=ctx.createRadialGradient(topTx,topTy-candleH-8,0.5,topTx,topTy-candleH-9,8);
+  fg.addColorStop(0,'#fffde0');fg.addColorStop(0.4,'#ffb020');fg.addColorStop(1,'rgba(255,80,0,0)');
+  ctx.fillStyle=fg;
+  ctx.beginPath();ctx.ellipse(topTx,topTy-candleH-10,4,8,0,0,Math.PI*2);ctx.fill();
+  // Glow
+  ctx.globalAlpha=0.15;
+  ctx.fillStyle='#ffcc00';
+  ctx.beginPath();ctx.arc(topTx,topTy-candleH-8,14,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+
+  // Update label
+  var lbl=document.getElementById('cakeLabel');
+  if(lbl) lbl.textContent=tiers+(tiers>1?' Tier':' Tier')+' '+flavour+' Cake';
+}
+
+function handleRefImgUpload(input){
+  var file=input.files[0];if(!file)return;
+  if(file.size>10*1024*1024){toast('Max 10MB');return;}
+  var r=new FileReader();
+  r.onload=function(e){
+    state.builder.refImg=e.target.result;
+    var prev=document.getElementById('refImgPreview');
+    prev.src=e.target.result;prev.style.display='block';
+    document.getElementById('refUploadHint').style.display='none';
+    document.getElementById('refRemoveBtn').style.display='inline';
+  };
+  r.readAsDataURL(file);
+}
+function removeRefImg(){
+  state.builder.refImg='';
+  document.getElementById('refImgPreview').style.display='none';
+  document.getElementById('refUploadHint').style.display='flex';
+  document.getElementById('refRemoveBtn').style.display='none';
+  document.getElementById('refImgInput').value='';
+}
+// ════════════════════════════════════════════════════
+// SETTINGS — FLAVOUR RATES
+// ════════════════════════════════════════════════════
+const DEFAULT_FLAVOUR_RATES = [
+  {name:'Chocolate', extra:0},
+  {name:'Vanilla', extra:0},
+  {name:'Red Velvet', extra:200},
+  {name:'Butterscotch', extra:0},
+  {name:'Mango', extra:150},
+  {name:'Pineapple', extra:0}
+];
+function getFlavourRates(){ return loadLS('cs_flavour_rates', DEFAULT_FLAVOUR_RATES); }
+function saveFlavourRates(){
+  var container = document.getElementById('flavourRatesContainer');
+  if(!container) return;
+  var rows = container.querySelectorAll('.flavour-rate-row');
+  var rates = [];
+  rows.forEach(function(row){
+    var nameInp  = row.querySelector('.fr-name');
+    var extraInp = row.querySelector('.fr-extra');
+    var imgInp   = row.querySelector('.fr-img-data');
+    var n = nameInp ? nameInp.value.trim() : '';
+    var e = extraInp ? parseInt(extraInp.value)||0 : 0;
+    var img = imgInp ? imgInp.value : '';
+    if(n) rates.push({name:n, extra:e, img:img});
+  });
+  saveLS('cs_flavour_rates', rates);
+  renderBuilderFlavours();
+  updateBuilderPreview();
+  toast('Flavour rates saved!');
+}
+function loadFlavourRatesAdmin(){
+  var container = document.getElementById('flavourRatesContainer');
+  if(!container) return;
+  container.innerHTML = '';
+  getFlavourRates().forEach(function(f){ addFlavourRateRowWith(f.name, f.extra, f.img||''); });
+}
+function addFlavourRateRow(){ addFlavourRateRowWith('', 0, ''); }
+var _frRowCount = 0;
+function addFlavourRateRowWith(fname, fextra, fimg){
+  var container = document.getElementById('flavourRatesContainer');
+  if(!container) return;
+  var idx = _frRowCount++;
+  var row = document.createElement('div');
+  row.className='flavour-rate-row';
+  row.style.cssText='display:flex;align-items:center;gap:6px;border:1.5px solid var(--cream3);padding:8px;flex-wrap:wrap;';
+  var thumbStyle = fimg ? 'display:block;' : 'display:none;';
+  row.innerHTML=
+    '<input type="text" class="fr-name" placeholder="Flavour name" value="'+fname+'" style="flex:2;min-width:100px;padding:6px 8px;border:1px solid var(--cream3);font-size:13px;">'
+    +'<span style="font-size:12px;color:var(--text3);">+₹</span>'
+    +'<input type="number" class="fr-extra" placeholder="0" value="'+fextra+'" min="0" style="width:70px;padding:6px 8px;border:1px solid var(--cream3);font-size:13px;">'
+    +'<div style="display:flex;align-items:center;gap:4px;">'
+    +  '<img id="fri_'+idx+'" src="'+(fimg||'')+'" style="'+thumbStyle+'width:36px;height:36px;object-fit:cover;border-radius:3px;border:1px solid var(--cream3);">'
+    +  '<label style="cursor:pointer;font-size:11px;color:var(--rose);border:1px solid var(--rose);padding:3px 6px;white-space:nowrap;">'
+    +    '📷 Photo<input type="file" accept="image/*" style="display:none" onchange="frImgUpload(this,'+idx+')">'
+    +  '</label>'
+    +'</div>'
+    +'<input type="hidden" class="fr-img-data" id="frd_'+idx+'" value="'+(fimg||'')+'">'
+    +'<button onclick="this.closest(\'.flavour-rate-row\').remove()" style="background:none;border:none;cursor:pointer;color:var(--rose);font-size:16px;">✕</button>';
+  container.appendChild(row);
+}
+function frImgUpload(input, idx){
+  var file = input.files[0]; if(!file) return;
+  if(file.size > 5*1024*1024){ toast('Max 5MB'); return; }
+  var r = new FileReader();
+  r.onload = function(e){
+    var thumb = document.getElementById('fri_'+idx);
+    var data  = document.getElementById('frd_'+idx);
+    if(thumb){ thumb.src = e.target.result; thumb.style.display='block'; }
+    if(data)  data.value = e.target.result;
+  };
+  r.readAsDataURL(file);
+}
+function renderBuilderFlavours(){
+  var container = document.getElementById('builderFlavourOpts');
+  if(!container) return;
+  var rates = getFlavourRates();
+  var icons = {'Chocolate':'&#127851;','Vanilla':'&#127846;','Red Velvet':'&#127827;','Butterscotch':'&#129064;','Mango':'&#129389;','Pineapple':'&#127821;'};
+  container.innerHTML = rates.map(function(f, i){
+    var icon = icons[f.name]||'&#127874;';
+    var priceLabel = f.extra>0 ? '+&#8377;'+f.extra : 'included';
+    var sel = i===0?' selected':'';
+    // Store flavour image in data attribute if set
+    var imgAttr = f.img ? ' data-img="'+encodeURIComponent(f.img)+'"' : '';
+    return '<div class="build-opt'+sel+'"'+imgAttr+' onclick="selectBuild(\'flavour\',\''+f.name+'\','+f.extra+',this)"><div class="build-opt-icon">'+icon+'</div><div class="build-opt-name">'+f.name+'</div><div class="build-opt-price">'+priceLabel+'</div></div>';
+  }).join('');
+  // Select first flavour by default
+  if(rates.length>0){
+    state.builder.flavour = rates[0].name;
+    state.builder.flavourPrice = rates[0].extra||0;
+    state.builder.flavourImg = rates[0].img||'';
+  }
+}
+
+// ── Update the preview area: show real photo if available, else draw canvas ──
+function updateBuilderPreview(){
+  var tiers      = state.builder.tiers||1;
+  var tierImgs   = getTierImages();
+  var tierImg    = tierImgs['t'+tiers]||'';
+
+  // Flavour image: check currently selected flavour option's data-img
+  var flavourImg = '';
+  var selectedFlavourEl = document.querySelector('#builderFlavourOpts .build-opt.selected');
+  if(selectedFlavourEl && selectedFlavourEl.getAttribute('data-img')){
+    flavourImg = decodeURIComponent(selectedFlavourEl.getAttribute('data-img'));
+  }
+
+  // Priority: flavour photo > tier photo > canvas
+  var photoToShow = flavourImg || tierImg;
+  var label = (tiers)+'  Tier'+(tiers>1?'s':'')+' · '+(state.builder.flavour||'Chocolate')+' Cake';
+
+  var photoWrap  = document.getElementById('cakePhotoWrap');
+  var photoImg   = document.getElementById('cakePhotoImg');
+  var photoLabel = document.getElementById('cakePhotoLabel');
+  var canvas     = document.getElementById('cakeCanvas');
+  var cakeLabel  = document.getElementById('cakeLabel');
+
+  if(photoToShow && photoWrap && photoImg){
+    photoImg.src = photoToShow;
+    if(photoLabel) photoLabel.textContent = label;
+    photoWrap.style.display = 'block';
+    if(canvas) canvas.style.display = 'none';
+    if(cakeLabel) cakeLabel.style.display = 'none';
+  } else {
+    if(photoWrap) photoWrap.style.display = 'none';
+    if(canvas) canvas.style.display = 'block';
+    if(cakeLabel){ cakeLabel.style.display = ''; cakeLabel.textContent = label; }
+    drawCakeCanvas();
+  }
+}
+function loadLogoSettings(){
+  var img = loadLS('cs_logo_img','');
+  var wrap = document.getElementById('navLogoIconWrap');
+  var prev = document.getElementById('logoPreviewWrap');
+  if(img){
+    if(wrap){
+      wrap.innerHTML = '<img src="'+img+'" style="width:46px;height:46px;object-fit:cover;position:relative;z-index:2;">';
+      wrap.style.background='none';
+    }
+    if(prev) prev.innerHTML = '<img src="'+img+'" style="width:80px;height:80px;object-fit:cover;">';
+  } else {
+    if(wrap){
+      wrap.innerHTML = '<span style="font-size:22px;position:relative;z-index:1;">&#127874;</span>';
+      wrap.style.background='';
+    }
+    if(prev) prev.innerHTML = '<span style="font-size:32px;">&#127874;</span>';
+  }
+}
+function handleLogoUpload(input){
+  var file = input.files[0]; if(!file) return;
+  if(file.size > 10*1024*1024){ toast('Image too large. Max 10MB.'); return; }
+  var r = new FileReader();
+  r.onload = function(e){ saveLS('cs_logo_img',e.target.result); loadLogoSettings(); toast('Logo updated!'); };
+  r.readAsDataURL(file);
+}
+function resetLogo(){ saveLS('cs_logo_img',''); loadLogoSettings(); toast('Logo reset to default.'); }
+
+// ════════════════════════════════════════════════════
+// SETTINGS — TIER PRICES + MIN KG + IMAGES
+// ════════════════════════════════════════════════════
+function saveTierSettings(){
+  var prices={
+    t1:parseInt(document.getElementById('tp_t1').value)||800,
+    t2:parseInt(document.getElementById('tp_t2').value)||1800,
+    t3:parseInt(document.getElementById('tp_t3').value)||2800,
+    t4:parseInt(document.getElementById('tp_t4').value)||3800
+  };
+  var minKg={
+    t1:parseFloat(document.getElementById('tm_t1').value)||1,
+    t2:parseFloat(document.getElementById('tm_t2').value)||3,
+    t3:parseFloat(document.getElementById('tm_t3').value)||5,
+    t4:parseFloat(document.getElementById('tm_t4').value)||5
+  };
+  saveLS('cs_tier_prices',prices);
+  saveLS('cs_tier_min_kg',minKg);
+  renderTierOptions();
+  toast('Tier settings saved!');
+}
+function loadTierSettingsAdmin(){
+  var prices = getTierPrices();
+  var minKg = getTierMinKg();
+  var imgs = getTierImages();
+  ['t1','t2','t3','t4'].forEach(function(k){
+    var tp = document.getElementById('tp_'+k);
+    var tm = document.getElementById('tm_'+k);
+    var tip = document.getElementById('tip_'+k);
+    if(tp) tp.value = prices[k]||0;
+    if(tm) tm.value = minKg[k]||1;
+    if(tip && imgs[k]){
+      tip.innerHTML = '<img src="'+imgs[k]+'" style="width:100%;height:80px;object-fit:cover;">';
+    }
+  });
+}
+function handleTierImgUpload(input, key){
+  var file = input.files[0]; if(!file) return;
+  if(file.size > 10*1024*1024){ toast('Image too large. Max 10MB.'); return; }
+  var r = new FileReader();
+  r.onload = function(e){
+    var imgs = getTierImages();
+    imgs[key] = e.target.result;
+    saveLS('cs_tier_images', imgs);
+    var tip = document.getElementById('tip_'+key);
+    if(tip) tip.innerHTML = '<img src="'+e.target.result+'" style="width:100%;height:80px;object-fit:cover;">';
+    renderTierOptions();
+    renderTierVisual();
+    toast('Tier image updated!');
+  };
+  r.readAsDataURL(file);
+  input.value = '';
+}
+
+// ════════════════════════════════════════════════════
+// SETTINGS — CONTACT
+// ════════════════════════════════════════════════════
+function saveContactSettings(){
+  var phone = (document.getElementById('settingsPhone')||{}).value||'+91 98803 05874';
+  var addr = (document.getElementById('settingsAddress')||{}).value||'Bedra, Mangalore';
+  saveLS('cs_contact',{phone:phone,addr:addr});
+  applyContactInfo();
+}
+function loadContactSettings(){
+  var c = loadLS('cs_contact',{phone:'+91 98803 05874',addr:'Bedra, Mangalore'});
+  var ep = document.getElementById('settingsPhone');
+  var ea = document.getElementById('settingsAddress');
+  if(ep) ep.value = c.phone;
+  if(ea) ea.value = c.addr;
+  applyContactInfo();
+}
+function applyContactInfo(){
+  var c = loadLS('cs_contact',{phone:'+91 98803 05874',addr:'Bedra, Mangalore'});
+  var digits = c.phone.replace(/[^0-9]/g,'');
+  var waFloat = document.getElementById('waFloat');
+  var waFooter = document.getElementById('waFooterLink');
+  var callFooter = document.getElementById('callFooterLink');
+  if(waFloat) waFloat.href = 'https://wa.me/'+digits;
+  if(waFooter) waFooter.href = 'https://wa.me/'+digits;
+  if(callFooter){ callFooter.href = 'tel:+'+digits; callFooter.textContent = '\uD83D\uDCDE Call '+c.phone; }
+}
+
+// ════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════
+renderFeatured();
+updateCategoryCounts();
+updateUserUI();
+updateCartUI();
+renderTierVisual();
+renderTierOptions();
+renderBuilderFlavours();
+updateCategoryDropdown();
+setTimeout(function(){ updateBuilderPreview(); },100);
+loadLogoSettings();
+loadContactSettings();
+// goAuthStep(0); // removed — using Google Sign-In now
+</script>
+
+<!-- Add/Edit Section Modal -->
+<div class="modal-overlay hidden" id="sectionModal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title" id="sectionModalTitle">Add New Section</div>
+      <button class="modal-close" onclick="closeModal('sectionModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sectionEditKey">
+      <div class="form-group"><label>Emoji Icon *</label><input type="text" id="sectionEmoji" placeholder="e.g. 🎂" style="font-size:24px;width:80px;"></div>
+      <div class="form-group"><label>Section Name *</label><input type="text" id="sectionName" placeholder="e.g. Photo Cakes"></div>
+      <div class="form-group"><label>Description</label><input type="text" id="sectionDesc" placeholder="e.g. Personalized cakes with your photos"></div>
+      <div class="form-group"><label>Ribbon Color</label>
+        <select id="sectionColor">
+          <option value="#c4756a">Rose Pink</option>
+          <option value="#7c5cbf">Purple</option>
+          <option value="#2d8a56">Green</option>
+          <option value="#c9a84c">Gold</option>
+          <option value="#3b82f6">Blue</option>
+          <option value="#ef4444">Red</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('sectionModal')">Cancel</button>
+      <button class="btn btn-rose" onclick="saveSection()">Save Section</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
