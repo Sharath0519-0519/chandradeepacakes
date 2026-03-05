@@ -1047,14 +1047,64 @@ footer p{font-size:13px;line-height:1.8;}
     <div class="admin-main">
       <!-- Dashboard -->
       <div class="admin-section active" id="admin-dashboard">
-        <div class="admin-section-title">Dashboard</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+          <div class="admin-section-title" style="margin-bottom:0;">Dashboard</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" onclick="testAlarm()" title="Test the 6 AM delivery alarm">⏰ Test Alarm</button>
+            <button class="btn btn-outline btn-sm" onclick="_requestNotifPermission()">🔔 Enable Notifications</button>
+          </div>
+        </div>
         <div class="stats-grid" id="adminStats"></div>
-        <div class="admin-table-wrap">
-          <div class="admin-table-header"><div class="admin-table-title">Recent Orders</div></div>
-          <div style="overflow-x:auto;"><table class="admin-table">
-            <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
-            <tbody id="dashOrdersBody"></tbody>
-          </table></div>
+
+        <!-- Today's Deliveries Alert -->
+        <div id="todayDeliveryAlert" style="display:none;background:linear-gradient(135deg,#fff3cd,#ffeaa7);border:2px solid #f0c040;border-radius:10px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;">
+          <div style="font-size:36px;flex-shrink:0;">🔔</div>
+          <div style="flex:1;">
+            <div style="font-size:16px;font-weight:700;color:#7a5000;margin-bottom:4px;" id="todayAlertTitle">Today's Deliveries</div>
+            <div style="font-size:13px;color:#8a6200;" id="todayAlertBody">You have orders to deliver today!</div>
+          </div>
+          <button onclick="adminNav('orders');document.getElementById('orderStatusFilter').value='Confirmed';filterAdminOrders();" class="btn" style="background:#f0c040;color:#7a5000;font-weight:700;white-space:nowrap;padding:10px 16px;">View Orders →</button>
+        </div>
+
+        <!-- New (Pending) Orders -->
+        <div class="admin-table-wrap" style="margin-bottom:20px;">
+          <div class="admin-table-header" style="background:linear-gradient(90deg,#fffbea,#fff);">
+            <div class="admin-table-title" style="display:flex;align-items:center;gap:8px;">
+              <span style="background:#f0c040;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;" id="dashPendingBadge">0</span>
+              🆕 New Orders <span style="font-size:12px;font-weight:400;color:var(--text3);">(COD - awaiting your confirmation)</span>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="adminNav('orders');document.getElementById('orderStatusFilter').value='Pending';filterAdminOrders();">View All →</button>
+          </div>
+          <div id="dashNewOrders" style="padding:0 20px 16px;">
+            <div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">No new orders</div>
+          </div>
+        </div>
+
+        <!-- Confirmed Orders (in progress) -->
+        <div class="admin-table-wrap" style="margin-bottom:20px;">
+          <div class="admin-table-header" style="background:linear-gradient(90deg,#eafaf1,#fff);">
+            <div class="admin-table-title" style="display:flex;align-items:center;gap:8px;">
+              <span style="background:#3a9e6b;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;" id="dashConfirmedBadge">0</span>
+              ✅ Confirmed Orders <span style="font-size:12px;font-weight:400;color:var(--text3);">(being prepared)</span>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="adminNav('orders');document.getElementById('orderStatusFilter').value='Confirmed';filterAdminOrders();">View All →</button>
+          </div>
+          <div id="dashConfirmedOrders" style="padding:0 20px 16px;">
+            <div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">No confirmed orders</div>
+          </div>
+        </div>
+
+        <!-- Cancelled Orders -->
+        <div class="admin-table-wrap" style="margin-bottom:20px;">
+          <div class="admin-table-header" style="background:linear-gradient(90deg,#fdecea,#fff);">
+            <div class="admin-table-title" style="display:flex;align-items:center;gap:8px;">
+              <span style="background:#c0392b;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;" id="dashCancelledBadge">0</span>
+              ❌ Cancelled Orders
+            </div>
+          </div>
+          <div id="dashCancelledOrders" style="padding:0 20px 16px;">
+            <div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">No cancelled orders</div>
+          </div>
         </div>
       </div>
 
@@ -1416,12 +1466,13 @@ footer p{font-size:13px;line-height:1.8;}
           <div style="font-size:15px;color:var(--text2);" id="processingMsg">Processing payment…</div>
         </div>
         <div id="paySuccessPanel" class="pay-success hidden">
-          <div class="pay-success-icon">🎉</div>
-          <div class="pay-success-title">Order Placed!</div>
+          <div class="pay-success-icon" id="successIcon">🎉</div>
+          <div class="pay-success-title" id="successTitle">Order Placed!</div>
           <div class="pay-success-detail">
             Order <strong id="successOrderId"></strong><br>
             Payment: <strong id="successPayMethod"></strong><br>
-            Amount: <strong id="successAmount" style="color:var(--rose);"></strong>
+            Amount: <strong id="successAmount" style="color:var(--rose);"></strong><br>
+            <span id="successStatusMsg" style="display:inline-block;margin-top:8px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;"></span>
           </div>
           <button class="btn btn-rose" onclick="closeModal('paymentModal');showPage('orders');">View My Orders →</button>
         </div>
@@ -1459,6 +1510,7 @@ let state = {
   orders:   loadLS('cs_orders', []),
   users:    loadLS('cs_users', []),
   cart:     loadLS('cs_cart', []),
+  revenue:  loadLS('cs_revenue', 0),
   currentUser: null,
   afterLoginPage: null,
   currentProduct: null,
@@ -1557,7 +1609,7 @@ function _renderPage(name){
   if(name==='home'){ renderFeatured(); updateCategoryCounts(); }
   if(name==='shop'){ renderShop(); }
   if(name==='orders'){ renderMyOrders(); }
-  if(name==='admin'){ renderAdminDashboard(); renderProductsTable(); renderOrdersTable(); renderCustomersTable(); loadFirestoreOrders(); }
+  if(name==='admin'){ renderAdminDashboard(); renderProductsTable(); renderOrdersTable(); renderCustomersTable(); loadFirestoreOrders(); startDeliveryAlarm(); }
   if(name==='builder'){ _initBuilder(); }
   if(name==='auth'){ goAuthStep(0); clearRecaptcha(); }
 }
@@ -1651,7 +1703,7 @@ function updateUserUI(){
   if(typeof updateMobileMenuUser === 'function') updateMobileMenuUser();
 }
 function logout(){ logoutUser(); }
-function logoutAdmin(){ stopOrderNotifications(); state.currentUser=null; updateUserUI(); showPage('home'); toast('Logged out'); }
+function logoutAdmin(){ stopOrderNotifications(); stopDeliveryAlarm(); state.currentUser=null; updateUserUI(); showPage('home'); toast('Logged out'); }
 
 // ════════════════════════════════════════════════════
 // PRODUCTS — RENDER
@@ -2288,15 +2340,93 @@ function updateCategoryDropdown(){
 }
 
 function renderAdminDashboard(){
-  const rev=state.orders.reduce((s,o)=>s+o.total,0);
+  var pendingOrders    = state.orders.filter(function(o){ return o.status==='Pending'; });
+  var confirmedOrders  = state.orders.filter(function(o){ return o.status==='Confirmed'; });
+  var cancelledOrders  = state.orders.filter(function(o){ return o.status==='Cancelled'; });
+  var rev = state.revenue || 0;
+
+  // ── Stats row ────────────────────────────────────────────
   document.getElementById('adminStats').innerHTML=[
-    {icon:'🎂',val:state.products.length,label:'Products'},
-    {icon:'📦',val:state.orders.length,label:'Orders'},
-    {icon:'💰',val:'₹'+rev.toLocaleString(),label:'Revenue'},
-    {icon:'👥',val:state.users.length,label:'Customers'}
-  ].map(s=>`<div class="stat-card"><div class="stat-card-icon">${s.icon}</div><div class="stat-card-val">${s.val}</div><div class="stat-card-label">${s.label}</div></div>`).join('');
-  const tbody=document.getElementById('dashOrdersBody');
-  if(tbody) tbody.innerHTML=state.orders.slice(0,5).map(o=>orderRow(o,false)).join('')||'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3);">No orders yet</td></tr>';
+    {icon:'🆕', val:pendingOrders.length,   label:'New Orders',       color:'#c9a84c'},
+    {icon:'✅', val:confirmedOrders.length,  label:'Confirmed Orders', color:'#3a9e6b'},
+    {icon:'💰', val:'₹'+rev.toLocaleString(),label:'Revenue (Delivered)',color:'#c4756a'},
+    {icon:'👥', val:state.users.length,      label:'Customers',        color:'#4a7abf'}
+  ].map(function(s){
+    return '<div class="stat-card"><div class="stat-card-icon">'+s.icon+'</div>'
+      +'<div class="stat-card-val" style="color:'+s.color+'">'+s.val+'</div>'
+      +'<div class="stat-card-label">'+s.label+'</div></div>';
+  }).join('');
+
+  // ── Today's Delivery Alert ───────────────────────────────
+  var todayStr = _todayDateString();
+  var todayOrders = state.orders.filter(function(o){
+    return (o.status==='Confirmed'||o.status==='Pending') && o.deliveryDate===todayStr;
+  });
+  var alertEl = document.getElementById('todayDeliveryAlert');
+  if(alertEl){
+    if(todayOrders.length>0){
+      alertEl.style.display='flex';
+      var names = todayOrders.map(function(o){ return '#'+o.id+' ('+o.customer.name+')'; }).join(', ');
+      document.getElementById('todayAlertTitle').textContent = '🔔 '+todayOrders.length+' Cake'+(todayOrders.length>1?'s':'')+' to Deliver TODAY!';
+      document.getElementById('todayAlertBody').textContent = 'Orders: '+names+' — Get baking! 🎂';
+    } else {
+      alertEl.style.display='none';
+    }
+  }
+
+  // ── Badge counts ─────────────────────────────────────────
+  var pb=document.getElementById('dashPendingBadge');   if(pb) pb.textContent=pendingOrders.length;
+  var cb=document.getElementById('dashConfirmedBadge'); if(cb) cb.textContent=confirmedOrders.length;
+  var xb=document.getElementById('dashCancelledBadge'); if(xb) xb.textContent=cancelledOrders.length;
+
+  // ── Render each section ──────────────────────────────────
+  _renderDashOrderList('dashNewOrders',       pendingOrders,   'No new orders waiting 👍');
+  _renderDashOrderList('dashConfirmedOrders', confirmedOrders, 'No confirmed orders right now');
+  _renderDashOrderList('dashCancelledOrders', cancelledOrders, 'No cancelled orders');
+}
+
+function _todayDateString(){
+  // Returns date in same format as deliveryDate field (YYYY-MM-DD from date input)
+  var d = new Date();
+  var y = d.getFullYear();
+  var m = String(d.getMonth()+1).padStart(2,'0');
+  var day = String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+
+function _renderDashOrderList(containerId, orders, emptyMsg){
+  var el = document.getElementById(containerId); if(!el) return;
+  if(!orders||orders.length===0){
+    el.innerHTML='<div style="text-align:center;padding:16px;color:var(--text3);font-size:13px;">'+emptyMsg+'</div>';
+    return;
+  }
+  el.innerHTML = orders.slice(0,5).map(function(o){
+    var statusColors={Pending:'#f0c040',Confirmed:'#3a9e6b',Cancelled:'#c0392b'};
+    var sc = statusColors[o.status]||'#888';
+    var isCOD = (o.paymentMethod||'').startsWith('Cash');
+    var payBadge = isCOD
+      ? '<span style="background:#fffbea;color:#c9a84c;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">💵 COD</span>'
+      : '<span style="background:#eafaf1;color:#2d9e6b;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">✓ Paid</span>';
+    var opts = ['Pending','Confirmed','Delivered','Cancelled'].map(function(s){
+      return '<option'+(s===o.status?' selected':'')+'>'+s+'</option>';
+    }).join('');
+    var itemNames = (o.items||[]).map(function(i){ return i.name+' ×'+i.qty; }).join(', ');
+    return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--cream3);flex-wrap:wrap;">'
+      +'<div style="flex:1;min-width:0;">'
+      +'  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px;">'
+      +'    <strong style="color:var(--brown);font-size:13px;">#'+o.id+'</strong>'
+      +'    <span style="background:'+sc+';color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">'+o.status+'</span>'
+      +'    '+payBadge
+      +'  </div>'
+      +'  <div style="font-size:13px;color:var(--text2);">'+o.customer.name+' · <span style="color:var(--text3);">'+o.customer.phone+'</span></div>'
+      +'  <div style="font-size:12px;color:var(--text3);">'+itemNames+'</div>'
+      +'  <div style="font-size:12px;color:var(--rose);font-weight:600;">₹'+o.total+' · 📅 '+(o.deliveryDate||'—')+'</div>'
+      +'</div>'
+      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">'
+      +'  <select onchange="updateOrderStatus(\''+o.id+'\',this.value)" style="padding:5px 8px;font-size:12px;border:1.5px solid var(--cream3);background:#fff;font-family:inherit;border-radius:4px;cursor:pointer;">'+opts+'</select>'
+      +'</div>'
+      +'</div>';
+  }).join('');
 }
 
 function orderRow(o, actions){
@@ -3199,23 +3329,23 @@ async function finaliseOrder(payMethod){
   const deliveryCharge=payState.deliveryCharge||0;
   const total=subtotal+deliveryCharge;
   const orderId='CS'+Date.now().toString().slice(-6);
-  // Save GPS coordinates if available
   const lat = _addrSelectedLat || null;
   const lng = _addrSelectedLng || null;
   const mapsLink = (lat && lng) ? 'https://maps.google.com/?q='+lat+','+lng : null;
+  // ── COD → Pending (admin confirms manually), Online → auto Confirmed ──
+  const isCOD = payMethod.startsWith('Cash');
+  const orderStatus = isCOD ? 'Pending' : 'Confirmed';
   const order={
     id:orderId, customer:{name,phone,email:state.currentUser?.email||''},
     items:[...state.cart], subtotal, deliveryCharge, total, address,
     lat, lng, mapsLink,
     deliveryDate:date, note,
-    paymentMethod:payMethod, paymentStatus:payMethod.startsWith('Cash')?'Pay on Delivery':'Paid',
-    status:'Confirmed', date:new Date().toLocaleDateString(), timestamp:Date.now()
+    paymentMethod:payMethod, paymentStatus:isCOD?'Pay on Delivery':'Paid',
+    status:orderStatus, date:new Date().toLocaleDateString(), timestamp:Date.now()
   };
   if(window._fb){ try{ await window._fb.addDoc(window._fb.collection(window._fb.db,'orders'),order); }catch(e){ console.error(e); } }
   state.orders.unshift(order); saveOrders();
-  // Send WhatsApp notification to admin
   sendOrderWhatsApp(order);
-  // Remember phone for next time
   if(phone && state.currentUser?.email) saveLS('cs_phone_'+state.currentUser.email, phone);
   state.cart=[]; saveCart(); updateCartUI();
   showPayPanel(2);
@@ -3224,6 +3354,19 @@ async function finaliseOrder(payMethod){
   document.getElementById('successOrderId').textContent='#'+orderId;
   document.getElementById('successPayMethod').textContent=payMethod;
   document.getElementById('successAmount').textContent='₹'+total;
+  // Show different message for COD vs online payment
+  var iconEl = document.getElementById('successIcon');
+  var titleEl = document.getElementById('successTitle');
+  var statusEl = document.getElementById('successStatusMsg');
+  if(isCOD){
+    if(iconEl) iconEl.textContent='📋';
+    if(titleEl) titleEl.textContent='Order Received!';
+    if(statusEl){ statusEl.textContent='⏳ Pending — Admin will confirm your order soon'; statusEl.style.background='#fffbea'; statusEl.style.color='#c9a84c'; }
+  } else {
+    if(iconEl) iconEl.textContent='🎉';
+    if(titleEl) titleEl.textContent='Order Confirmed!';
+    if(statusEl){ statusEl.textContent='✅ Confirmed — Payment received, your cake is being prepared!'; statusEl.style.background='#eafaf1'; statusEl.style.color='#2d9e6b'; }
+  }
 }
 
 function sendOrderWhatsApp(order){
@@ -3260,9 +3403,18 @@ function sendOrderWhatsApp(order){
 async function loadFirestoreOrders(){
   if(!window._fb) return;
   try {
+    // Load revenue
+    try{
+      var revDoc = await window._fb.getDoc(window._fb.doc(window._fb.db,'settings','revenue'));
+      if(revDoc.exists()) state.revenue = revDoc.data().total||0;
+      else state.revenue = loadLS('cs_revenue',0);
+    }catch(e){ state.revenue = loadLS('cs_revenue',0); }
+
     const q=window._fb.query(window._fb.collection(window._fb.db,'orders'),window._fb.orderBy('timestamp','desc'));
     const snap=await window._fb.getDocs(q);
     state.orders=snap.docs.map(d=>({...d.data(),_docId:d.id}));
+    // Purge orders older than 15 days
+    purgeOldOrders();
     saveOrders(); renderAdminDashboard(); renderOrdersTable(); filterAdminOrders();
   } catch(e){ console.warn('Firestore orders error:',e); }
 }
@@ -3324,10 +3476,109 @@ async function saveProductToFirestore(product){
 }
 
 async function updateOrderStatus(id, status){
-  const o=state.orders.find(x=>Number(x.id)===Number(id)); if(!o) return;
-  o.status=status; saveOrders();
-  if(window._fb&&o._docId){ try{ await window._fb.updateDoc(window._fb.doc(window._fb.db,'orders',o._docId),{status}); }catch(e){ console.warn(e); } }
+  const o = state.orders.find(x => String(x.id) === String(id));
+  if(!o){ console.warn('Order not found:', id); return; }
+  const prevStatus = o.status;
+  o.status = status;
+
+  // ── Revenue: add when Delivered, undo only if changed back FROM Delivered ──
+  // Revenue is saved permanently in Firestore/localStorage separately,
+  // so erasing the order record later does NOT change the revenue total.
+  if(status==='Delivered' && prevStatus!=='Delivered'){
+    state.revenue = (state.revenue||0) + (o.total||0);
+    saveLS('cs_revenue', state.revenue);
+    if(window._fb){
+      try{ await window._fb.setDoc(window._fb.doc(window._fb.db,'settings','revenue'),{total:state.revenue}); }catch(e){}
+    }
+  }
+  if(status!=='Delivered' && prevStatus==='Delivered'){
+    state.revenue = Math.max(0,(state.revenue||0) - (o.total||0));
+    saveLS('cs_revenue', state.revenue);
+    if(window._fb){
+      try{ await window._fb.setDoc(window._fb.doc(window._fb.db,'settings','revenue'),{total:state.revenue}); }catch(e){}
+    }
+  }
+
+  // ── Stamp deliveredAt / cancelledAt timestamp for 3-day purge ────────────
+  if(status==='Delivered' && prevStatus!=='Delivered'){
+    o.deliveredAt = Date.now();
+  }
+  if(status==='Cancelled' && prevStatus!=='Cancelled'){
+    o.cancelledAt = Date.now();
+  }
+
+  // ── Update Firestore ──────────────────────────────
+  if(window._fb&&o._docId){
+    try{
+      var updateData = {status:status};
+      if(o.deliveredAt) updateData.deliveredAt = o.deliveredAt;
+      if(o.cancelledAt) updateData.cancelledAt = o.cancelledAt;
+      await window._fb.updateDoc(window._fb.doc(window._fb.db,'orders',o._docId), updateData);
+    }catch(e){ console.warn(e); }
+  }
+
+  saveOrders();
+
+  // ── Delivered: remove from order list immediately (revenue already saved) ──
+  if(status==='Delivered'){
+    toast('✅ Order #'+id+' Delivered! Revenue updated. Record will be erased in 3 days.');
+    setTimeout(function(){
+      state.orders = state.orders.filter(x => String(x.id) !== String(id));
+      saveOrders();
+      renderAdminDashboard();
+      renderOrdersTable();
+      filterAdminOrders();
+    }, 1500);
+    return;
+  }
+
+  // ── Cancelled: keep visible in dashboard Cancelled section, erase in 3 days ──
+  if(status==='Cancelled'){
+    toast('❌ Order #'+id+' Cancelled. Will be removed from records in 3 days.');
+    renderAdminDashboard();
+    renderOrdersTable();
+    filterAdminOrders();
+    return;
+  }
+
+  // ── Other status changes (Pending ↔ Confirmed) ────────────────────────────
   toast('Order #'+id+' → '+status);
+  renderAdminDashboard();
+  filterAdminOrders();
+}
+
+// ── Auto-purge: Delivered/Cancelled orders older than 3 days ─────────────
+// Revenue is NOT touched here — it is stored separately and already saved.
+function purgeOldOrders(){
+  var threeDays = 3 * 24 * 60 * 60 * 1000;
+  var now = Date.now();
+  var toDelete = [];
+
+  state.orders = state.orders.filter(function(o){
+    // For Delivered orders: purge 3 days after deliveredAt
+    if(o.status==='Delivered'){
+      var since = o.deliveredAt || o.timestamp || 0;
+      if(since && (now - since) > threeDays){ toDelete.push(o); return false; }
+    }
+    // For Cancelled orders: purge 3 days after cancelledAt
+    if(o.status==='Cancelled'){
+      var since = o.cancelledAt || o.timestamp || 0;
+      if(since && (now - since) > threeDays){ toDelete.push(o); return false; }
+    }
+    // Keep everything else (Pending, Confirmed)
+    return true;
+  });
+
+  toDelete.forEach(function(o){
+    if(window._fb&&o._docId){
+      window._fb.deleteDoc(window._fb.doc(window._fb.db,'orders',o._docId)).catch(function(){});
+    }
+  });
+
+  if(toDelete.length>0){
+    saveOrders();
+    console.log('🗑️ Purged '+toDelete.length+' old Delivered/Cancelled orders (>3 days). Revenue unchanged.');
+  }
 }
 
 // fbReady event handled by _firebaseReadyPoll in module script above
@@ -3832,6 +4083,175 @@ function applyContactInfo(){
   if(waFloat) waFloat.href = 'https://wa.me/'+digits;
   if(waFooter) waFooter.href = 'https://wa.me/'+digits;
   if(callFooter){ callFooter.href = 'tel:+'+digits; callFooter.textContent = '\uD83D\uDCDE Call '+c.phone; }
+}
+
+// ════════════════════════════════════════════════════
+// 6 AM DELIVERY ALARM SYSTEM
+// ════════════════════════════════════════════════════
+var _alarmInterval = null;
+var _alarmFiredToday = loadLS('cs_alarm_fired_date','');
+var _alarmAudioCtx = null;
+var _alarmStopped = false;
+
+function startDeliveryAlarm(){
+  _alarmStopped = false;
+  _checkDeliveryAlarm();
+  if(_alarmInterval) clearInterval(_alarmInterval);
+  _alarmInterval = setInterval(_checkDeliveryAlarm, 60000);
+}
+function stopDeliveryAlarm(){
+  if(_alarmInterval){ clearInterval(_alarmInterval); _alarmInterval=null; }
+  _stopAlarmAudio();
+}
+function _stopAlarmAudio(){
+  try{ if(_alarmAudioCtx){ _alarmAudioCtx.close(); _alarmAudioCtx=null; } }catch(e){}
+}
+
+function _checkDeliveryAlarm(){
+  if(!state.currentUser||!state.currentUser.isAdmin) return;
+  if(_alarmStopped) return;
+
+  var now = new Date();
+  var todayStr = _todayDateString();
+  var hour = now.getHours();
+
+  // Fire between 6:00 AM and 6:59 AM, only once per day
+  if(hour !== 6) return;
+  if(_alarmFiredToday === todayStr) return;
+
+  var todayOrders = state.orders.filter(function(o){
+    return (o.status==='Confirmed'||o.status==='Pending') && o.deliveryDate===todayStr;
+  });
+  if(todayOrders.length === 0) return;
+
+  _alarmFiredToday = todayStr;
+  saveLS('cs_alarm_fired_date', todayStr);
+  _showAlarmPopup(todayOrders);
+}
+
+function _playAlarmLoop(){
+  try{
+    _stopAlarmAudio();
+    _alarmAudioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    var ctx = _alarmAudioCtx;
+    var startTime = ctx.currentTime;
+    // Repeating alarm: 3 rounds of beeps
+    for(var round=0; round<3; round++){
+      var base = startTime + round*2.4;
+      [[880,0],[1100,0.2],[880,0.4],[1100,0.6],[880,0.8],[1320,1.0],[1320,1.2]].forEach(function(pair){
+        var o=ctx.createOscillator(); var g=ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value=pair[0]; o.type='triangle';
+        var t=base+pair[1];
+        g.gain.setValueAtTime(0,t);
+        g.gain.linearRampToValueAtTime(0.5,t+0.03);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+        o.start(t); o.stop(t+0.28);
+      });
+    }
+  }catch(e){ console.warn('Audio error:',e); }
+}
+
+function _showAlarmPopup(orders){
+  // Remove existing popup if any
+  var existing = document.getElementById('alarmPopup');
+  if(existing) existing.remove();
+
+  _playAlarmLoop();
+
+  var names = orders.map(function(o){
+    return '<div style="padding:8px 12px;background:var(--cream2);border-radius:6px;margin-bottom:6px;">'
+      +'<strong style="color:var(--brown);">#'+o.id+'</strong> — '+o.customer.name
+      +' <span style="color:var(--text3);">'+o.customer.phone+'</span><br>'
+      +'<span style="font-size:12px;color:var(--rose);">'
+        +(o.items||[]).map(function(i){return i.name+' ×'+i.qty;}).join(', ')
+      +'</span></div>';
+  }).join('');
+
+  var popup = document.createElement('div');
+  popup.id = 'alarmPopup';
+  popup.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:20px;';
+  popup.innerHTML =
+    '<div style="background:#fff;max-width:460px;width:100%;border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35);">'
+    // Header
+    +'<div style="background:linear-gradient(135deg,#f0c040,#e8a020);padding:24px 24px 16px;text-align:center;">'
+    +'  <div style="font-size:52px;margin-bottom:8px;">⏰🎂</div>'
+    +'  <div style="font-family:Cormorant Garamond,serif;font-size:26px;font-weight:700;color:#fff;">Good Morning!</div>'
+    +'  <div style="font-size:15px;color:rgba(255,255,255,.9);margin-top:4px;">You have <strong>'+orders.length+' cake'+(orders.length>1?'s':'')+' to prepare today!</strong></div>'
+    +'</div>'
+    // Body
+    +'<div style="padding:20px;">'
+    +'  <div style="font-size:13px;font-weight:700;color:var(--brown);margin-bottom:10px;letter-spacing:.05em;text-transform:uppercase;">Today\'s Delivery Orders</div>'
+    +   names
+    +'  <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">'
+    +'    <button onclick="_dismissAlarm(false)" class="btn btn-rose" style="flex:1;justify-content:center;min-width:120px;">View Orders 📦</button>'
+    +'    <button onclick="_dismissAlarm(true)" class="btn" style="flex:1;background:#c0392b;color:#fff;justify-content:center;min-width:120px;">🔕 Stop Alarm</button>'
+    +'  </div>'
+    +'  <div style="text-align:center;margin-top:10px;">'
+    +'    <button onclick="_snoozeAlarm()" style="background:none;border:none;font-size:12px;color:var(--text3);cursor:pointer;text-decoration:underline;">⏰ Snooze 10 min</button>'
+    +'  </div>'
+    +'</div>'
+    +'</div>';
+  document.body.appendChild(popup);
+
+  // Browser notification
+  if('Notification' in window && Notification.permission==='granted'){
+    new Notification('🎂 Chandradeepa — '+orders.length+' Cake'+(orders.length>1?'s':'')+' Today!',{
+      body:'Orders: '+orders.map(function(o){return '#'+o.id+' '+o.customer.name;}).join(', '),
+      icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🎂</text></svg>'
+    });
+  }
+}
+
+function _dismissAlarm(stopPermanently){
+  _stopAlarmAudio();
+  var popup = document.getElementById('alarmPopup');
+  if(popup) popup.remove();
+  if(stopPermanently){
+    // Stop the interval — no more alarms today
+    _alarmStopped = true;
+    stopDeliveryAlarm();
+    toast('🔕 Alarm stopped for today.');
+  } else {
+    // Navigate to orders
+    adminNav('orders');
+    document.getElementById('orderStatusFilter').value='Confirmed';
+    filterAdminOrders();
+  }
+}
+
+function _snoozeAlarm(){
+  _stopAlarmAudio();
+  var popup = document.getElementById('alarmPopup');
+  if(popup) popup.remove();
+  // Re-fire in 10 minutes
+  setTimeout(function(){
+    if(!_alarmStopped && state.currentUser && state.currentUser.isAdmin){
+      var todayStr = _todayDateString();
+      var todayOrders = state.orders.filter(function(o){
+        return (o.status==='Confirmed'||o.status==='Pending') && o.deliveryDate===todayStr;
+      });
+      if(todayOrders.length>0) _showAlarmPopup(todayOrders);
+    }
+  }, 10*60*1000);
+  toast('⏰ Alarm snoozed for 10 minutes.');
+}
+
+function _requestNotifPermission(){
+  if(!('Notification' in window)){ toast('❌ Browser does not support notifications'); return; }
+  if(Notification.permission==='granted'){ toast('✅ Notifications already enabled!'); return; }
+  Notification.requestPermission().then(function(p){
+    if(p==='granted') toast('✅ Notifications enabled! You will get alarms at 6 AM on delivery day.');
+    else toast('⚠️ Notification permission denied. You can still see the popup alarm.');
+  });
+}
+
+// Manual alarm test button for admin
+function testAlarm(){
+  _alarmStopped = false; // allow test even if stopped
+  var todayOrders = state.orders.filter(function(o){ return o.status==='Confirmed'||o.status==='Pending'; });
+  var mock = todayOrders.length>0 ? todayOrders.slice(0,3) : [{id:'TEST001',customer:{name:'Test Customer',phone:'9876543210'},items:[{name:'Chocolate Cake',qty:1}],status:'Confirmed',deliveryDate:_todayDateString()}];
+  _showAlarmPopup(mock);
 }
 
 // ════════════════════════════════════════════════════
