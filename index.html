@@ -8,7 +8,7 @@
 <!-- Firebase SDKs -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut }
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, signInWithEmailAndPassword, signInAnonymously }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, query, orderBy, updateDoc, deleteDoc }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -28,7 +28,7 @@ const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
-window._fb = { auth, db, GoogleAuthProvider, signInWithPopup, signOut,
+window._fb = { auth, db, GoogleAuthProvider, signInWithPopup, signOut, signInAnonymously, signInWithEmailAndPassword,
   collection, doc, setDoc, getDoc, getDocs, addDoc, query, orderBy, updateDoc, deleteDoc };
 
 // Notify main script Firebase is ready — poll until main JS functions exist
@@ -42,7 +42,7 @@ function _firebaseReadyPoll(){
 setTimeout(_firebaseReadyPoll, 50);
 auth.onAuthStateChanged(function(user){
   if(typeof state==='undefined') return;
-  if(user&&!state.currentUser){state.currentUser={name:user.displayName||user.email,email:user.email,photo:user.photoURL||'',isAdmin:(user.email==='sharathkulal1919@gmail.com')};if(typeof updateUserUI==='function')updateUserUI();}
+  if(user&&!state.currentUser){var _adminEmails=['sharathkulal1919@gmail.com','chandradeepacakes@gmail.com'];state.currentUser={name:user.displayName||user.email,email:user.email,photo:user.photoURL||'',isAdmin:_adminEmails.indexOf(user.email)!==-1};if(typeof updateUserUI==='function')updateUserUI();}
   else if(!user&&state.currentUser&&!state.currentUser.isAdmin){state.currentUser=null;if(typeof updateUserUI==='function')updateUserUI();}
 });
 </script>
@@ -1755,7 +1755,7 @@ async function signInWithGoogle(){
     // Save to Firestore users collection
     await window._fb.setDoc(window._fb.doc(window._fb.db,'users',user.uid), userData, {merge:true});
     if(!state.users.find(u=>u.email===user.email)){ state.users.push(userData); saveUsers(); }
-    state.currentUser = { name: user.displayName||user.email, email: user.email, photo: user.photoURL||'', isAdmin: (user.email==='sharathkulal1919@gmail.com') };
+    var _adminEmails=['sharathkulal1919@gmail.com','chandradeepacakes@gmail.com']; state.currentUser = { name: user.displayName||user.email, email: user.email, photo: user.photoURL||'', isAdmin: _adminEmails.indexOf(user.email)!==-1 };
     updateUserUI();
     var nextPage = state.afterLoginPage;
     state.afterLoginPage = null;
@@ -1834,7 +1834,15 @@ function loginAsAdmin(){
     document.getElementById('showAdminBtn').classList.remove('hidden');
     document.getElementById('adminUsernameInput').value = '';
     document.getElementById('adminPasswordInput').value = '';
-    state.currentUser = {name:'Admin', isAdmin:true};
+    state.currentUser = {name:'Admin', email:'sharathkulal1919@gmail.com', isAdmin:true};
+    // Sign into Firebase with admin email so Firestore writes work
+    if(window._fb){
+      window._fb.signInWithEmailAndPassword(window._fb.auth, 'sharathkulal1919@gmail.com', 'Deepa@123')
+        .catch(function(){ 
+          // Email auth not set up — try anonymous
+          window._fb.signInAnonymously(window._fb.auth).catch(function(){});
+        });
+    }
     updateUserUI();
     showPage('admin');
     toast('Welcome, Admin! 🔐');
