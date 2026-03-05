@@ -1193,6 +1193,47 @@ function saveOrders(){ saveLS('cs_orders', state.orders); }
 function saveUsers(){ saveLS('cs_users', state.users); }
 function saveCart(){ saveLS('cs_cart', state.cart); }
 
+// ── Firestore Settings Helpers ────────────────────────────────────────────
+async function saveSettingsToFirestore(key, data){
+  if(!window._fb) return;
+  try{
+    await window._fb.setDoc(window._fb.doc(window._fb.db,'settings',key), data, {merge:true});
+  }catch(e){ console.warn('Firestore save failed:', e); }
+}
+async function loadSettingsFromFirestore(key, def){
+  if(!window._fb) return def;
+  try{
+    const snap = await window._fb.getDoc(window._fb.doc(window._fb.db,'settings',key));
+    return snap.exists() ? snap.data() : def;
+  }catch(e){ return def; }
+}
+async function loadAllSettings(){
+  // Load logo
+  var logo = await loadSettingsFromFirestore('logo', {img:''});
+  if(logo.img){ saveLS('cs_logo_img', logo.img); loadLogoSettings(); }
+  // Load tier
+  var tier = await loadSettingsFromFirestore('tier', {prices:{t1:800,t2:1800,t3:2800,t4:3800}, minKg:{t1:1,t2:3,t3:5,t4:5}, images:{t1:'',t2:'',t3:'',t4:''}});
+  if(tier.prices) saveLS('cs_tier_prices', tier.prices);
+  if(tier.minKg) saveLS('cs_tier_min_kg', tier.minKg);
+  if(tier.images) saveLS('cs_tier_images', tier.images);
+  // Load flavours
+  var flavours = await loadSettingsFromFirestore('flavours', {rates: null});
+  if(flavours.rates) saveLS('cs_flavour_rates', flavours.rates);
+  // Load contact
+  var contact = await loadSettingsFromFirestore('contact', {phone:'+91 98803 05874', addr:'Bedra, Mangalore'});
+  saveLS('cs_contact', contact);
+  // Load sections
+  var sections = await loadSettingsFromFirestore('sections', {data: null});
+  if(sections.data) saveLS('cs_sections', sections.data);
+  // Re-render everything
+  renderTierOptions();
+  renderBuilderFlavours();
+  updateBuilderPreview();
+  loadContactSettings();
+  loadLogoSettings();
+  if(typeof renderFeatured==='function') renderFeatured();
+}
+
 function defaultProducts(){
   return [
     {id:1,name:'Chocolate Truffle',emoji:'🍫',category:'Birthday',desc:'Rich dark chocolate layers with truffle cream frosting',basePrice:850,badge:'Bestseller',flavours:[{f:'Chocolate',extra:0},{f:'Dark Chocolate',extra:50},{f:'Mocha',extra:100}],weights:[{w:'0.5 kg',p:450},{w:'1 kg',p:850},{w:'2 kg',p:1600}],img:''},
@@ -1786,7 +1827,10 @@ const DEFAULT_SECTIONS = [
 ];
 
 function getSections(){ return loadLS('cs_sections', DEFAULT_SECTIONS); }
-function saveSections(sec){ saveLS('cs_sections', sec); }
+function saveSections(sec){ 
+  saveLS('cs_sections', sec); 
+  saveSettingsToFirestore('sections', {data:sec});
+}
 
 function renderSectionsTable(){
   const sections = getSections();
@@ -3018,6 +3062,7 @@ function saveFlavourRates(){
     if(n) rates.push({name:n, extra:e, img:img});
   });
   saveLS('cs_flavour_rates', rates);
+  saveSettingsToFirestore('flavours', {rates:rates});
   renderBuilderFlavours();
   updateBuilderPreview();
   toast('Flavour rates saved!');
@@ -3143,10 +3188,10 @@ function handleLogoUpload(input){
   var file = input.files[0]; if(!file) return;
   if(file.size > 10*1024*1024){ toast('Image too large. Max 10MB.'); return; }
   var r = new FileReader();
-  r.onload = function(e){ saveLS('cs_logo_img',e.target.result); loadLogoSettings(); toast('Logo updated!'); };
+  r.onload = function(e){ saveLS('cs_logo_img',e.target.result); saveSettingsToFirestore('logo',{img:e.target.result}); loadLogoSettings(); toast('Logo updated! ✅'); };
   r.readAsDataURL(file);
 }
-function resetLogo(){ saveLS('cs_logo_img',''); loadLogoSettings(); toast('Logo reset to default.'); }
+function resetLogo(){ saveLS('cs_logo_img',''); saveSettingsToFirestore('logo',{img:''}); loadLogoSettings(); toast('Logo reset!'); }
 
 // ════════════════════════════════════════════════════
 // SETTINGS — TIER PRICES + MIN KG + IMAGES
@@ -3166,8 +3211,10 @@ function saveTierSettings(){
   };
   saveLS('cs_tier_prices',prices);
   saveLS('cs_tier_min_kg',minKg);
+  var imgs = getTierImages();
+  saveSettingsToFirestore('tier', {prices:prices, minKg:minKg, images:imgs});
   renderTierOptions();
-  toast('Tier settings saved!');
+  toast('Tier settings saved! ✅');
 }
 function loadTierSettingsAdmin(){
   var prices = getTierPrices();
@@ -3192,11 +3239,15 @@ function handleTierImgUpload(input, key){
     var imgs = getTierImages();
     imgs[key] = e.target.result;
     saveLS('cs_tier_images', imgs);
+    var prices = getTierPrices();
+    var minKg = getTierMinKg();
+    saveSettingsToFirestore('tier', {prices:prices, minKg:minKg, images:imgs});
     var tip = document.getElementById('tip_'+key);
     if(tip) tip.innerHTML = '<img src="'+e.target.result+'" style="width:100%;height:80px;object-fit:cover;">';
     renderTierOptions();
     renderTierVisual();
-    toast('Tier image updated!');
+    updateBuilderPreview();
+    toast('Tier image updated! ✅');
   };
   r.readAsDataURL(file);
   input.value = '';
@@ -3208,8 +3259,11 @@ function handleTierImgUpload(input, key){
 function saveContactSettings(){
   var phone = (document.getElementById('settingsPhone')||{}).value||'+91 98803 05874';
   var addr = (document.getElementById('settingsAddress')||{}).value||'Bedra, Mangalore';
-  saveLS('cs_contact',{phone:phone,addr:addr});
+  var contactData = {phone:phone, addr:addr};
+  saveLS('cs_contact', contactData);
+  saveSettingsToFirestore('contact', contactData);
   applyContactInfo();
+  toast('Contact settings saved! ✅');
 }
 function loadContactSettings(){
   var c = loadLS('cs_contact',{phone:'+91 98803 05874',addr:'Bedra, Mangalore'});
@@ -3244,6 +3298,8 @@ updateCategoryDropdown();
 setTimeout(function(){ updateBuilderPreview(); },100);
 loadLogoSettings();
 loadContactSettings();
+// Load all settings from Firestore
+setTimeout(function(){ loadAllSettings(); }, 500);
 // goAuthStep(0); // removed — using Google Sign-In now
 </script>
 
