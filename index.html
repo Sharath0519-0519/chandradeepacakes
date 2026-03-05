@@ -2603,28 +2603,60 @@ function addrFetchSuggestions(q){
   dropdown.style.display = 'block';
 
   var MANG_LAT=12.8697, MANG_LNG=74.8432;
-  // Use OpenStreetMap Nominatim — completely free, no API key needed
-  var qMang = q.toLowerCase().includes('mangalore') || q.toLowerCase().includes('mangaluru') ? q : q + ' Mangalore Karnataka';
-  var url = 'https://nominatim.openstreetmap.org/search?'
-    + 'q=' + encodeURIComponent(qMang)
-    + '&format=json&addressdetails=1&limit=8&countrycodes=in'
-    + '&viewbox=74.7,12.7,75.1,13.1&bounded=0'
-    + '&accept-language=en';
+  var qMang = q.toLowerCase().includes('mangalore')||q.toLowerCase().includes('mangaluru') ? q : q+' Mangalore';
 
-  fetch(url, {headers:{'Accept':'application/json','User-Agent':'ChandradeepaCakes/1.0'}})
-  .then(function(r){ return r.json(); })
-  .catch(function(){ return []; })
-  .then(function(results){
-    if(!results || results.length===0){
-      dropdown.innerHTML = '<div style="padding:16px;font-size:13px;color:var(--text3);text-align:center;"><div style="font-size:22px;">🔍</div><strong>No results.</strong><br><span style="font-size:12px;">Try e.g. "Vijayanagara Mangalore"</span></div>';
+  // Try Nominatim via CORS proxy first, fallback to direct
+  var urls = [
+    'https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(qMang)+'&format=json&addressdetails=1&limit=10&countrycodes=in&accept-language=en',
+    'https://photon.komoot.io/api/?q='+encodeURIComponent(qMang)+'&limit=8&lang=en&lat=12.8697&lon=74.8432'
+  ];
+
+  function tryFetch(urlList, idx){
+    if(idx >= urlList.length){
+      dropdown.innerHTML = '<div style="padding:16px;font-size:13px;color:var(--text3);text-align:center;"><div style="font-size:22px;">🔍</div><strong>No results found.</strong><br><span style="font-size:12px;">Try "Bejai Mangalore" or use 📍 My Location</span></div>';
       return;
     }
-    // Sort: closest to Mangalore first
-    results.sort(function(a,b){
-      var da=Math.sqrt(Math.pow((+a.lat)-MANG_LAT,2)+Math.pow((+a.lon)-MANG_LNG,2));
-      var db=Math.sqrt(Math.pow((+b.lat)-MANG_LAT,2)+Math.pow((+b.lon)-MANG_LNG,2));
-      return da-db;
-    });
+    fetch(urlList[idx])
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      // Photon returns {features:[{geometry:{coordinates:[lng,lat]}, properties:{...}}]}
+      // Nominatim returns [{lat,lon,display_name,...}]
+      var results = [];
+      if(data && data.features){ // Photon format
+        results = data.features
+          .filter(function(f){ 
+            var p=f.properties||{};
+            var country=(p.country||'').toLowerCase();
+            return country.includes('india');
+          })
+          .map(function(f){
+            var p=f.properties||{};
+            var coords=f.geometry&&f.geometry.coordinates||[0,0];
+            var name=p.name||p.street||p.city||'';
+            var parts=[p.name,p.street,p.district||p.city,p.state].filter(Boolean);
+            // Remove duplicates
+            var seen2={};
+            parts=parts.filter(function(x){ if(seen2[x])return false; seen2[x]=true; return true; });
+            return {
+              lat:coords[1], lon:coords[0],
+              display_name: parts.join(', ')||name,
+              display_place: name,
+              type: p.osm_value||'place',
+              address:{ road:p.street, suburb:p.district, city:p.city, state:p.state }
+            };
+          });
+      } else if(Array.isArray(data)){ // Nominatim format
+        results = data.map(function(r){ return {lat:r.lat,lon:r.lon,display_name:r.display_name,display_place:r.display_place,type:r.type,class:r.class,address:r.address||{}}; });
+      }
+      // Filter to India results near Mangalore
+      results = results.filter(function(r){ return r.lat && r.lon; });
+      if(results.length===0){ tryFetch(urlList, idx+1); return; }
+      // Sort by distance to Mangalore
+      results.sort(function(a,b){
+        var da=Math.sqrt(Math.pow((+a.lat)-MANG_LAT,2)+Math.pow((+a.lon)-MANG_LNG,2));
+        var db=Math.sqrt(Math.pow((+b.lat)-MANG_LAT,2)+Math.pow((+b.lon)-MANG_LNG,2));
+        return da-db;
+      });
       function getIcon(type,cls){
         var t=((type||'')+(cls||'')).toLowerCase();
         if(t.match(/restaurant|cafe|bakery|food/)) return '🍽️';
@@ -2658,8 +2690,9 @@ function addrFetchSuggestions(q){
           selectAddrResult(this.getAttribute('data-lat'),this.getAttribute('data-lng'),decodeURIComponent(this.getAttribute('data-name')));
         });
       });
-    })
-    .catch(function(){ dropdown.innerHTML='<div style="padding:14px;font-size:13px;color:var(--rose);">Search failed. Check internet.</div>'; });
+    }).catch(function(){ tryFetch(urlList, idx+1); });
+  }
+  tryFetch(urls, 0);
 }
 
 
