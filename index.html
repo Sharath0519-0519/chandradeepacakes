@@ -1074,6 +1074,27 @@ footer p{font-size:13px;line-height:1.8;}
             <div id="addrSelectedText" style="font-size:13px;color:var(--brown);line-height:1.5;padding-right:28px;"></div>
             <button type="button" onclick="clearSelectedAddr()" style="position:absolute;top:8px;right:10px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;">&#10005;</button>
           </div>
+          <!-- Extra address fields — shown after area is selected -->
+          <div id="addrExtraFields" style="display:none;margin-top:8px;background:var(--cream2);border:1.5px solid var(--cream3);border-radius:6px;padding:12px;gap:8px;display:none;flex-direction:column;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:4px;">📝 Complete your address</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div>
+                <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">House / Flat No. *</label>
+                <input type="text" id="py-houseno" placeholder="e.g. 12A, Flat 3" autocomplete="off"
+                  style="width:100%;padding:8px 10px;border:1.5px solid var(--cream3);font-size:13px;font-family:inherit;box-sizing:border-box;border-radius:3px;">
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Landmark</label>
+                <input type="text" id="py-landmark" placeholder="e.g. Near temple" autocomplete="off"
+                  style="width:100%;padding:8px 10px;border:1.5px solid var(--cream3);font-size:13px;font-family:inherit;box-sizing:border-box;border-radius:3px;">
+              </div>
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px;">Full Address (auto-filled, you can edit)</label>
+              <textarea id="py-fulladdress" rows="2" placeholder="Full delivery address..."
+                style="width:100%;padding:8px 10px;border:1.5px solid var(--cream3);font-size:13px;font-family:inherit;box-sizing:border-box;border-radius:3px;resize:vertical;"></textarea>
+            </div>
+          </div>
           <input type="hidden" id="py-address">
           <div id="addrMiniMap" style="display:none;margin-top:8px;border-radius:6px;overflow:hidden;border:1px solid var(--cream3);"></div>
         </div>
@@ -1722,7 +1743,14 @@ async function signInWithGoogle(){
     if(!state.users.find(u=>u.email===user.email)){ state.users.push(userData); saveUsers(); }
     state.currentUser = { name: user.displayName||user.email, email: user.email, photo: user.photoURL||'', isAdmin: false };
     updateUserUI();
-    showPage(state.afterLoginPage||'home'); state.afterLoginPage=null;
+    var nextPage = state.afterLoginPage;
+    state.afterLoginPage = null;
+    if(nextPage === 'checkout_return'){
+      showPage('home');
+      setTimeout(function(){ openPaymentFlow(); }, 300);
+    } else {
+      showPage(nextPage||'home');
+    }
     toast('Welcome, '+state.currentUser.name+'! 🎂');
   } catch(e) {
     if(e.code !== 'auth/popup-closed-by-user') toast('❌ Sign-in failed: '+(e.message||e.code));
@@ -2368,7 +2396,17 @@ const SHOP_LNG = 74.8432;
 let payState = {method:'razorpay', deliveryCharge:0};
 
 function openPaymentFlow(){
-  if(!state.currentUser){ state.afterLoginPage=null; goAuthStep(0); showPage('auth'); return; }
+  if(!state.currentUser){
+    // Close cart sidebar first, then open sign in
+    var cartSidebar = document.getElementById('cartSidebar');
+    var cartOverlay = document.getElementById('cartOverlay');
+    if(cartSidebar) cartSidebar.classList.remove('open');
+    if(cartOverlay) cartOverlay.classList.remove('open');
+    state.afterLoginPage = 'checkout_return'; // remember to reopen checkout after login
+    showPage('auth');
+    toast('👋 Please sign in to place your order!');
+    return;
+  }
   if(state.cart.length===0){ toast('Your cart is empty!'); return; }
   payState.deliveryCharge = 0;
   showPayPanel(0); selectPayMethod('razorpay');
@@ -2398,6 +2436,10 @@ function openPaymentFlow(){
   var _am=document.getElementById('addrMiniMap'); if(_am) _am.style.display='none';
   document.getElementById('py-address').value='';
   var _dd=document.getElementById('addrDropdown'); if(_dd){ _dd.innerHTML=''; _dd.style.display='none'; }
+  var _ef=document.getElementById('addrExtraFields'); if(_ef) _ef.style.display='none';
+  var _hn=document.getElementById('py-houseno'); if(_hn) _hn.value='';
+  var _lm=document.getElementById('py-landmark'); if(_lm) _lm.value='';
+  var _fa=document.getElementById('py-fulladdress'); if(_fa) _fa.value='';
   var _db=document.getElementById('addrTypeDetect'); if(_db){ _db.style.borderColor=''; _db.style.color=''; _db.style.background=''; _db.textContent='\uD83D\uDCCD My Location'; _db.disabled=false; }
   _addrSelectedLat=null; _addrSelectedLng=null;
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
@@ -2459,12 +2501,25 @@ function selectPayMethod(m){
 function payStep1(){
   const name=document.getElementById('py-name').value.trim();
   const phone=document.getElementById('py-phone').value.trim();
-  const address=document.getElementById('py-address').value.trim();
+  const baseAddress=document.getElementById('py-address').value.trim();
+  const houseNo=(document.getElementById('py-houseno')||{value:''}).value.trim();
+  const landmark=(document.getElementById('py-landmark')||{value:''}).value.trim();
+  const fullAddrField=(document.getElementById('py-fulladdress')||{value:''}).value.trim();
   const date=document.getElementById('py-date').value;
+  // Build combined address
+  var addrParts=[];
+  if(houseNo) addrParts.push(houseNo);
+  if(fullAddrField) addrParts.push(fullAddrField);
+  else if(baseAddress) addrParts.push(baseAddress);
+  if(landmark) addrParts.push('Near: '+landmark);
+  var fullAddress = addrParts.join(', ') || baseAddress;
   if(!name){ toast('Please enter your name'); return; }
-  if(!phone){ toast('Please enter your phone number'); return; }
-  if(!address){ toast('Please enter your delivery address'); return; }
+  if(!phone || phone.replace(/[^0-9]/g,'').length<10){ toast('Please enter a valid 10-digit phone'); return; }
+  if(!baseAddress){ toast('Please search and select a delivery area'); return; }
+  if(!houseNo){ toast('Please enter your house/flat number'); var h=document.getElementById('py-houseno'); if(h)h.focus(); return; }
   if(!date){ toast('Please select a delivery date'); return; }
+  // Store full address for order
+  document.getElementById('py-address').value = fullAddress;
   showPayPanel(1);
 }
 function payGoBack(){ showPayPanel(0); }
@@ -2592,13 +2647,19 @@ function selectAddrResult(lat, lng, displayName){
   // Fill hidden field + show selected
   document.getElementById('py-address').value = displayName;
   var si = document.getElementById('addrSearchInput');
-  // Show first 3 meaningful parts in the search box
   var shortName = displayName.split(',').slice(0,3).map(function(s){ return s.trim(); }).join(', ');
   if(si) si.value = shortName;
   var sw = document.getElementById('addrSelectedWrap');
   var st = document.getElementById('addrSelectedText');
   if(sw) sw.style.display = 'block';
   if(st) st.textContent = displayName;
+  // Show extra address fields and auto-fill
+  var extraFields = document.getElementById('addrExtraFields');
+  if(extraFields){ extraFields.style.display = 'flex'; }
+  var fullAddr = document.getElementById('py-fulladdress');
+  if(fullAddr && !fullAddr.value) fullAddr.value = displayName;
+  // Focus house number
+  setTimeout(function(){ var h=document.getElementById('py-houseno'); if(h&&!h.value) h.focus(); }, 200);
   closeAddrDropdown();
   // Show mini map
   showAddrMiniMap(lat, lng, displayName.split(',')[0]);
@@ -2642,6 +2703,10 @@ function clearSelectedAddr(){
   var si = document.getElementById('addrSearchInput'); if(si){ si.value=''; si.focus(); }
   var sw = document.getElementById('addrSelectedWrap'); if(sw) sw.style.display='none';
   var am = document.getElementById('addrMiniMap'); if(am) am.style.display='none';
+  var ef = document.getElementById('addrExtraFields'); if(ef) ef.style.display='none';
+  var hn = document.getElementById('py-houseno'); if(hn) hn.value='';
+  var lm = document.getElementById('py-landmark'); if(lm) lm.value='';
+  var fa = document.getElementById('py-fulladdress'); if(fa) fa.value='';
   document.getElementById('deliveryInfo').style.display='none';
   payState.deliveryCharge = 0;
   var subtotal = state.cart.reduce(function(s,i){ return s+i.price*i.qty; },0);
@@ -2724,7 +2789,7 @@ function processRazorpay(){
     name:'Chandradeepa Home Made Cakes', description:'Cake Order',
     handler: function(resp){ finaliseOrder('Razorpay · '+resp.razorpay_payment_id); },
     prefill:{name,contact:phone},
-    notes:{address:document.getElementById('py-address').value},
+    notes:{address:address, houseNo:houseNo, landmark:landmark},
     theme:{color:'#c4756a'},
     modal:{ondismiss:()=>toast('Payment cancelled')}
   });
@@ -3097,17 +3162,20 @@ function addFlavourRateRowWith(fname, fextra, fimg){
     +'<button onclick="this.closest(\'.flavour-rate-row\').remove()" style="background:none;border:none;cursor:pointer;color:var(--rose);font-size:16px;">✕</button>';
   container.appendChild(row);
 }
-function frImgUpload(input, idx){
+async function frImgUpload(input, idx){
   var file = input.files[0]; if(!file) return;
   if(file.size > 5*1024*1024){ toast('Max 5MB'); return; }
-  var r = new FileReader();
-  r.onload = function(e){
+  toast('⏳ Uploading image...');
+  try {
+    var url = await uploadImageToImgBB(file);
     var thumb = document.getElementById('fri_'+idx);
     var data  = document.getElementById('frd_'+idx);
-    if(thumb){ thumb.src = e.target.result; thumb.style.display='block'; }
-    if(data)  data.value = e.target.result;
-  };
-  r.readAsDataURL(file);
+    if(thumb){ thumb.src = url; thumb.style.display='block'; }
+    if(data)  data.value = url;
+    toast('✅ Image uploaded!');
+  } catch(e) {
+    toast('❌ Upload failed: '+e.message);
+  }
 }
 function renderBuilderFlavours(){
   var container = document.getElementById('builderFlavourOpts');
@@ -3187,8 +3255,19 @@ function loadLogoSettings(){
 function handleLogoUpload(input){
   var file = input.files[0]; if(!file) return;
   if(file.size > 10*1024*1024){ toast('Image too large. Max 10MB.'); return; }
+  var logoFile = file;
   var r = new FileReader();
-  r.onload = function(e){ saveLS('cs_logo_img',e.target.result); saveSettingsToFirestore('logo',{img:e.target.result}); loadLogoSettings(); toast('Logo updated! ✅'); };
+  r.onload = async function(e){ 
+    try {
+      // Try ImgBB first, fall back to base64
+      var logoUrl = e.target.result;
+      try { logoUrl = await uploadImageToImgBB(logoFile); } catch(ee){}
+      saveLS('cs_logo_img', logoUrl); 
+      saveSettingsToFirestore('logo',{img:logoUrl}); 
+      loadLogoSettings(); 
+      toast('✅ Logo updated! All customers will see it.'); 
+    } catch(err){ toast('Logo save failed'); }
+  };
   r.readAsDataURL(file);
 }
 function resetLogo(){ saveLS('cs_logo_img',''); saveSettingsToFirestore('logo',{img:''}); loadLogoSettings(); toast('Logo reset!'); }
@@ -3196,6 +3275,7 @@ function resetLogo(){ saveLS('cs_logo_img',''); saveSettingsToFirestore('logo',{
 // ════════════════════════════════════════════════════
 // SETTINGS — TIER PRICES + MIN KG + IMAGES
 // ════════════════════════════════════════════════════
+var _tierSaveTimer = null;
 function saveTierSettings(){
   var prices={
     t1:parseInt(document.getElementById('tp_t1').value)||800,
@@ -3209,12 +3289,16 @@ function saveTierSettings(){
     t3:parseFloat(document.getElementById('tm_t3').value)||5,
     t4:parseFloat(document.getElementById('tm_t4').value)||5
   };
-  saveLS('cs_tier_prices',prices);
-  saveLS('cs_tier_min_kg',minKg);
-  var imgs = getTierImages();
-  saveSettingsToFirestore('tier', {prices:prices, minKg:minKg, images:imgs});
+  saveLS('cs_tier_prices', prices);
+  saveLS('cs_tier_min_kg', minKg);
   renderTierOptions();
-  toast('Tier settings saved! ✅');
+  // Debounce Firestore save — wait 1s after last keystroke
+  clearTimeout(_tierSaveTimer);
+  _tierSaveTimer = setTimeout(function(){
+    var imgs = getTierImages();
+    saveSettingsToFirestore('tier', {prices:prices, minKg:minKg, images:imgs});
+    toast('✅ Tier rates saved! All customers will see updated prices.');
+  }, 1000);
 }
 function loadTierSettingsAdmin(){
   var prices = getTierPrices();
@@ -3231,26 +3315,29 @@ function loadTierSettingsAdmin(){
     }
   });
 }
-function handleTierImgUpload(input, key){
+async function handleTierImgUpload(input, key){
   var file = input.files[0]; if(!file) return;
   if(file.size > 10*1024*1024){ toast('Image too large. Max 10MB.'); return; }
-  var r = new FileReader();
-  r.onload = function(e){
+  toast('⏳ Uploading tier image...');
+  try {
+    var url = await uploadImageToImgBB(file);
     var imgs = getTierImages();
-    imgs[key] = e.target.result;
+    imgs[key] = url;
     saveLS('cs_tier_images', imgs);
     var prices = getTierPrices();
     var minKg = getTierMinKg();
     saveSettingsToFirestore('tier', {prices:prices, minKg:minKg, images:imgs});
     var tip = document.getElementById('tip_'+key);
-    if(tip) tip.innerHTML = '<img src="'+e.target.result+'" style="width:100%;height:80px;object-fit:cover;">';
+    if(tip) tip.innerHTML = '<img src="'+url+'" style="width:100%;height:80px;object-fit:cover;">';
     renderTierOptions();
     renderTierVisual();
     updateBuilderPreview();
-    toast('Tier image updated! ✅');
-  };
-  r.readAsDataURL(file);
-  input.value = '';
+    toast('✅ Tier image saved! All customers will see it.');
+    input.value = '';
+  } catch(e) {
+    toast('❌ Upload failed: '+e.message);
+    input.value = '';
+  }
 }
 
 // ════════════════════════════════════════════════════
@@ -3263,7 +3350,7 @@ function saveContactSettings(){
   saveLS('cs_contact', contactData);
   saveSettingsToFirestore('contact', contactData);
   applyContactInfo();
-  toast('Contact settings saved! ✅');
+  toast('✅ Contact saved! All customers will see updated info.');
 }
 function loadContactSettings(){
   var c = loadLS('cs_contact',{phone:'+91 98803 05874',addr:'Bedra, Mangalore'});
