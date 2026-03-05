@@ -2180,16 +2180,19 @@ function addFlavourRowWith(fname, fextra, fimg){
     <button class="btn btn-danger btn-sm" onclick="removeFlavourRow(this)" style="flex-shrink:0;">&#10005;</button>`;
   container.appendChild(row);
 }
-function flavourImgUpload(input,i){
+async function flavourImgUpload(input,i){
   const file=input.files[0];if(!file)return;
   if(file.size>10*1024*1024){toast('Max 10MB');return;}
-  const r=new FileReader();
-  r.onload=function(e){
-    document.getElementById('fi'+i).value=e.target.result;
+  toast('⏳ Uploading flavour image...');
+  try{
+    const url=await uploadImageToImgBB(file);
+    document.getElementById('fi'+i).value=url;
     const p=document.getElementById('fip'+i);
-    p.src=e.target.result;p.style.display='block';
-  };
-  r.readAsDataURL(file);
+    p.src=url;p.style.display='block';
+    toast('✅ Flavour image uploaded!');
+  }catch(e){
+    toast('❌ Upload failed: '+e.message);
+  }
 }
 function removeFlavourRow(btn){ btn.closest('.variant-row').remove(); }
 
@@ -2864,7 +2867,7 @@ async function loadFirestoreProducts(){
     const snap=await window._fb.getDocs(window._fb.collection(window._fb.db,'products'));
     if(!snap.empty){
       state.products=snap.docs.map(d=>({...d.data(),_docId:d.id}));
-      saveProducts(); renderFeatured(); renderShop(); updateCategoryCounts();
+      saveProducts(); renderFeatured(); renderShop(); updateCategoryCounts(); renderAdminDashboard();
     }
   } catch(e){ console.warn('Firestore products error:',e); }
 }
@@ -2887,7 +2890,11 @@ async function updateOrderStatus(id, status){
   toast('Order #'+id+' → '+status);
 }
 
-window.addEventListener('fbReady',()=>{ loadFirestoreProducts(); });
+window.addEventListener('fbReady',()=>{ 
+  loadFirestoreProducts();
+  // Also load all settings from Firestore
+  setTimeout(function(){ loadAllSettings(); }, 300);
+});
 
 // ════════════════════════════════════════════════════
 // SETTINGS FUNCTIONS
@@ -3405,8 +3412,7 @@ updateCategoryDropdown();
 setTimeout(function(){ updateBuilderPreview(); },100);
 loadLogoSettings();
 loadContactSettings();
-// Load all settings from Firestore
-setTimeout(function(){ loadAllSettings(); }, 500);
+// Settings loaded via fbReady event above
 // goAuthStep(0); // removed — using Google Sign-In now
 </script>
 
