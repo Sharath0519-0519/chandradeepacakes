@@ -880,6 +880,7 @@ footer p{font-size:13px;line-height:1.8;}
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;">
               <div style="border:1.5px solid var(--cream3);padding:16px;">
                 <div style="font-weight:700;color:var(--brown);margin-bottom:10px;">1 Tier</div>
+                <div class="form-group" style="margin-bottom:10px;"><label>Display Name</label><input type="text" id="tn_t1" value="1 Tier" oninput="saveTierSettings()" placeholder="e.g. Single Tier"></div>
                 <div class="form-group" style="margin-bottom:10px;"><label>Base Price (&#8377;)</label><input type="number" id="tp_t1" value="800" min="0" oninput="saveTierSettings()"></div>
                 <div class="form-group" style="margin-bottom:10px;"><label>Minimum Weight (kg)</label><input type="number" id="tm_t1" value="1" min="0.5" step="0.5" oninput="saveTierSettings()"></div>
                 <div style="margin-bottom:6px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--brown2);">Tier Photo</div>
@@ -889,6 +890,7 @@ footer p{font-size:13px;line-height:1.8;}
               </div>
               <div style="border:1.5px solid var(--cream3);padding:16px;">
                 <div style="font-weight:700;color:var(--brown);margin-bottom:10px;">2 Tiers</div>
+                <div class="form-group" style="margin-bottom:10px;"><label>Display Name</label><input type="text" id="tn_t2" value="2 Tiers" oninput="saveTierSettings()" placeholder="e.g. Double Tier"></div>
                 <div class="form-group" style="margin-bottom:10px;"><label>Base Price (&#8377;)</label><input type="number" id="tp_t2" value="1800" min="0" oninput="saveTierSettings()"></div>
                 <div class="form-group" style="margin-bottom:10px;"><label>Minimum Weight (kg)</label><input type="number" id="tm_t2" value="3" min="0.5" step="0.5" oninput="saveTierSettings()"></div>
                 <div style="margin-bottom:6px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--brown2);">Tier Photo</div>
@@ -898,6 +900,7 @@ footer p{font-size:13px;line-height:1.8;}
               </div>
               <div style="border:1.5px solid var(--cream3);padding:16px;">
                 <div style="font-weight:700;color:var(--brown);margin-bottom:10px;">3 Tiers</div>
+                <div class="form-group" style="margin-bottom:10px;"><label>Display Name</label><input type="text" id="tn_t3" value="3 Tiers" oninput="saveTierSettings()" placeholder="e.g. Triple Tier"></div>
                 <div class="form-group" style="margin-bottom:10px;"><label>Base Price (&#8377;)</label><input type="number" id="tp_t3" value="2800" min="0" oninput="saveTierSettings()"></div>
                 <div class="form-group" style="margin-bottom:10px;"><label>Minimum Weight (kg)</label><input type="number" id="tm_t3" value="5" min="0.5" step="0.5" oninput="saveTierSettings()"></div>
                 <div style="margin-bottom:6px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--brown2);">Tier Photo</div>
@@ -907,6 +910,7 @@ footer p{font-size:13px;line-height:1.8;}
               </div>
               <div style="border:1.5px solid var(--cream3);padding:16px;">
                 <div style="font-weight:700;color:var(--brown);margin-bottom:10px;">4 Tiers</div>
+                <div class="form-group" style="margin-bottom:10px;"><label>Display Name</label><input type="text" id="tn_t4" value="4 Tiers" oninput="saveTierSettings()" placeholder="e.g. Grand Tier"></div>
                 <div class="form-group" style="margin-bottom:10px;"><label>Base Price (&#8377;)</label><input type="number" id="tp_t4" value="3800" min="0" oninput="saveTierSettings()"></div>
                 <div class="form-group" style="margin-bottom:10px;"><label>Minimum Weight (kg)</label><input type="number" id="tm_t4" value="5" min="0.5" step="0.5" oninput="saveTierSettings()"></div>
                 <div style="margin-bottom:6px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--brown2);">Tier Photo</div>
@@ -1075,7 +1079,7 @@ footer p{font-size:13px;line-height:1.8;}
             <button type="button" onclick="clearSelectedAddr()" style="position:absolute;top:8px;right:10px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;">&#10005;</button>
           </div>
           <!-- Extra address fields — shown after area is selected -->
-          <div id="addrExtraFields" style="display:none;margin-top:8px;background:var(--cream2);border:1.5px solid var(--cream3);border-radius:6px;padding:12px;gap:8px;display:none;flex-direction:column;">
+          <div id="addrExtraFields" style="display:none;margin-top:8px;background:var(--cream2);border:1.5px solid var(--rose);border-radius:6px;padding:14px;gap:10px;flex-direction:column;border-left:4px solid var(--rose);">
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:4px;">📝 Complete your address</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
               <div>
@@ -1233,10 +1237,11 @@ async function loadAllSettings(){
   var logo = await loadSettingsFromFirestore('logo', {img:''});
   if(logo.img){ saveLS('cs_logo_img', logo.img); loadLogoSettings(); }
   // Load tier
-  var tier = await loadSettingsFromFirestore('tier', {prices:{t1:800,t2:1800,t3:2800,t4:3800}, minKg:{t1:1,t2:3,t3:5,t4:5}, images:{t1:'',t2:'',t3:'',t4:''}});
+  var tier = await loadSettingsFromFirestore('tier', {prices:{t1:800,t2:1800,t3:2800,t4:3800}, minKg:{t1:1,t2:3,t3:5,t4:5}, images:{t1:'',t2:'',t3:'',t4:''}, names:{t1:'1 Tier',t2:'2 Tiers',t3:'3 Tiers',t4:'4 Tiers'}});
   if(tier.prices) saveLS('cs_tier_prices', tier.prices);
   if(tier.minKg) saveLS('cs_tier_min_kg', tier.minKg);
   if(tier.images) saveLS('cs_tier_images', tier.images);
+  if(tier.names) saveLS('cs_tier_names', tier.names);
   // Load flavours
   var flavours = await loadSettingsFromFirestore('flavours', {rates: null});
   if(flavours.rates) saveLS('cs_flavour_rates', flavours.rates);
@@ -1597,6 +1602,7 @@ const tierColors = ['#c4756a','#d4897e','#e8b4a8','#f0cdc6'];
 function getTierPrices(){ return loadLS('cs_tier_prices',{t1:800,t2:1800,t3:2800,t4:3800}); }
 function getTierMinKg(){ return loadLS('cs_tier_min_kg',{t1:1,t2:3,t3:5,t4:5}); }
 function getTierImages(){ return loadLS('cs_tier_images',{t1:'',t2:'',t3:'',t4:''}); }
+function getTierNames(){ return loadLS('cs_tier_names',{t1:'1 Tier',t2:'2 Tiers',t3:'3 Tiers',t4:'4 Tiers'}); }
 
 function selectBuild(key, val, price, el){
   el.closest('.builder-options').querySelectorAll('.build-opt').forEach(e=>e.classList.remove('selected'));
@@ -1612,21 +1618,21 @@ function renderTierOptions(){
   var container = document.getElementById('tierOptsContainer'); if(!container) return;
   var prices = getTierPrices();
   var imgs = getTierImages();
+  var names = getTierNames();
   var tiers = [
-    {n:1, price:prices.t1, img:imgs.t1},
-    {n:2, price:prices.t2, img:imgs.t2},
-    {n:3, price:prices.t3, img:imgs.t3},
-    {n:4, price:prices.t4, img:imgs.t4}
+    {n:1, price:prices.t1, img:imgs.t1, name:names.t1||'1 Tier'},
+    {n:2, price:prices.t2, img:imgs.t2, name:names.t2||'2 Tiers'},
+    {n:3, price:prices.t3, img:imgs.t3, name:names.t3||'3 Tiers'},
+    {n:4, price:prices.t4, img:imgs.t4, name:names.t4||'4 Tiers'}
   ];
   container.innerHTML = tiers.map(function(t,i){
     var sel = (state.builder.tiers===t.n) ? ' selected' : (i===0&&!state.builder.tiers?' selected':'');
     var iconHtml = t.img
       ? '<div class="build-opt-icon" style="padding:0;height:70px;overflow:hidden;"><img src="'+t.img+'" style="width:100%;height:70px;object-fit:cover;"></div>'
       : '<div class="build-opt-icon">'+['&#127874;','&#127874;&#127874;','&#127984;','&#127983;'][i]+'</div>';
-    return '<div class="build-opt'+sel+'" onclick="selectBuild(\'tiers\','+t.n+','+t.price+',this)">'+iconHtml+'<div class="build-opt-name">'+t.n+' Tier'+(t.n>1?'s':'')+'</div><div class="build-opt-price">from &#8377;'+t.price.toLocaleString()+'</div></div>';
+    return '<div class="build-opt'+sel+'" onclick="selectBuild(\'tiers\','+t.n+','+t.price+',this)">'+iconHtml+'<div class="build-opt-name">'+t.name+'</div><div class="build-opt-price">from &#8377;'+t.price.toLocaleString()+'</div></div>';
   }).join('');
 }
-
 function renderTierVisual(){
   var n = state.builder.tiers||1;
   var imgs = getTierImages();
@@ -2655,7 +2661,12 @@ function selectAddrResult(lat, lng, displayName){
   if(st) st.textContent = displayName;
   // Show extra address fields and auto-fill
   var extraFields = document.getElementById('addrExtraFields');
-  if(extraFields){ extraFields.style.display = 'flex'; }
+  if(extraFields){ 
+    extraFields.style.cssText = extraFields.style.cssText.replace('display:none','display:flex');
+    extraFields.style.display = 'flex'; 
+    extraFields.style.flexDirection = 'column'; 
+    extraFields.style.gap = '10px';
+  }
   var fullAddr = document.getElementById('py-fulladdress');
   if(fullAddr && !fullAddr.value) fullAddr.value = displayName;
   // Focus house number
@@ -3289,27 +3300,36 @@ function saveTierSettings(){
     t3:parseFloat(document.getElementById('tm_t3').value)||5,
     t4:parseFloat(document.getElementById('tm_t4').value)||5
   };
+  var names={
+    t1:(document.getElementById('tn_t1')||{value:'1 Tier'}).value||'1 Tier',
+    t2:(document.getElementById('tn_t2')||{value:'2 Tiers'}).value||'2 Tiers',
+    t3:(document.getElementById('tn_t3')||{value:'3 Tiers'}).value||'3 Tiers',
+    t4:(document.getElementById('tn_t4')||{value:'4 Tiers'}).value||'4 Tiers'
+  };
   saveLS('cs_tier_prices', prices);
   saveLS('cs_tier_min_kg', minKg);
+  saveLS('cs_tier_names', names);
   renderTierOptions();
-  // Debounce Firestore save — wait 1s after last keystroke
   clearTimeout(_tierSaveTimer);
   _tierSaveTimer = setTimeout(function(){
     var imgs = getTierImages();
-    saveSettingsToFirestore('tier', {prices:prices, minKg:minKg, images:imgs});
-    toast('✅ Tier rates saved! All customers will see updated prices.');
+    saveSettingsToFirestore('tier', {prices:prices, minKg:minKg, images:imgs, names:names});
+    toast('✅ Saved! All customers will see updated prices & names.');
   }, 1000);
 }
 function loadTierSettingsAdmin(){
   var prices = getTierPrices();
   var minKg = getTierMinKg();
   var imgs = getTierImages();
+  var names = getTierNames();
   ['t1','t2','t3','t4'].forEach(function(k){
     var tp = document.getElementById('tp_'+k);
     var tm = document.getElementById('tm_'+k);
+    var tn = document.getElementById('tn_'+k);
     var tip = document.getElementById('tip_'+k);
     if(tp) tp.value = prices[k]||0;
     if(tm) tm.value = minKg[k]||1;
+    if(tn) tn.value = names[k]||'';
     if(tip && imgs[k]){
       tip.innerHTML = '<img src="'+imgs[k]+'" style="width:100%;height:80px;object-fit:cover;">';
     }
