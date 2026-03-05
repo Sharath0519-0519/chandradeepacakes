@@ -425,30 +425,238 @@ footer .footer-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-w
 footer p{font-size:13px;line-height:1.8;}
 
 /* ═══════════════════════════════════════
-   RESPONSIVE
+   MOBILE BOTTOM NAV
 ═══════════════════════════════════════ */
-@media(max-width:768px){
-  .nav-links{display:none;}
-  .cat-grid{grid-template-columns:1fr;}
-  .admin-layout{flex-direction:row;}
-  .admin-sidebar{width:58px;min-width:58px;padding:8px 0;overflow:hidden;position:sticky;top:70px;height:calc(100vh - 70px);}
-  .admin-sidebar-logo{padding:8px 0;display:flex;justify-content:center;}
-  .admin-sidebar-name{display:none;}
-  .admin-sidebar-sub{display:none;}
-  .admin-sidebar-logo-wrap{justify-content:center;}
-  .admin-nav-item{padding:10px 0;justify-content:center;gap:0;font-size:0;}
-  .admin-nav-item .admin-nav-icon-box{width:36px;height:36px;flex-shrink:0;}
-  .admin-main{padding:14px 10px;overflow-x:hidden;min-width:0;flex:1;}
-  .admin-section-title{font-size:17px;}
-  .admin-table-wrap{overflow-x:auto;}
-  .cart-sidebar{width:100%;}
+.mobile-bottom-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;z-index:300;
+  background:var(--white);border-top:1px solid var(--cream3);
+  box-shadow:0 -4px 20px rgba(92,61,46,.1);
+  padding:0;
+  height:62px;
+}
+.mobile-bottom-nav-inner{
+  display:flex;align-items:stretch;height:100%;
+}
+.mbn-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;cursor:pointer;padding:6px 4px;border:none;background:none;
+  color:var(--text3);font-size:9px;font-weight:600;letter-spacing:.05em;
+  text-transform:uppercase;transition:color .2s;position:relative;
+  -webkit-tap-highlight-color:transparent;
+}
+.mbn-item.active,.mbn-item:active{color:var(--rose);}
+.mbn-item svg,.mbn-item .mbn-icon{font-size:20px;line-height:1;}
+.mbn-badge{position:absolute;top:6px;right:calc(50% - 18px);background:var(--gold);color:#fff;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+
+/* ═══════════════════════════════════════
+   MOBILE HAMBURGER MENU
+═══════════════════════════════════════ */
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;border:none;background:none;-webkit-tap-highlight-color:transparent;}
+.hamburger span{display:block;width:22px;height:2px;background:var(--brown);transition:all .3s;border-radius:2px;}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0);}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+.mobile-menu-drawer{
+  position:fixed;top:70px;left:0;right:0;bottom:0;z-index:190;
+  background:var(--white);transform:translateX(-100%);
+  transition:transform .32s cubic-bezier(.4,0,.2,1);
+  padding:20px 0 100px;overflow-y:auto;
+}
+.mobile-menu-drawer.open{transform:translateX(0);}
+.mobile-menu-overlay{position:fixed;inset:0;top:70px;background:rgba(0,0,0,.4);z-index:189;opacity:0;pointer-events:none;transition:opacity .3s;}
+.mobile-menu-overlay.open{opacity:1;pointer-events:all;}
+.mobile-menu-item{
+  display:flex;align-items:center;gap:16px;padding:16px 28px;
+  font-size:16px;font-weight:500;color:var(--text2);cursor:pointer;
+  border-bottom:1px solid var(--cream3);transition:background .15s,color .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.mobile-menu-item:active,.mobile-menu-item.active{background:var(--cream2);color:var(--rose);}
+.mobile-menu-item-icon{font-size:22px;width:32px;text-align:center;}
+.mobile-menu-user{padding:20px 28px;display:flex;align-items:center;gap:14px;background:var(--cream2);margin-bottom:8px;}
+.mobile-menu-user-avatar{width:44px;height:44px;background:var(--rose);color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;border-radius:50%;}
+.mobile-menu-user-name{font-size:15px;font-weight:600;color:var(--brown);}
+.mobile-menu-user-email{font-size:12px;color:var(--text3);}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE — TABLET (max 900px)
+═══════════════════════════════════════ */
+@media(max-width:900px){
+  .cat-grid{grid-template-columns:repeat(2,1fr);}
+  .product-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
 }
 
-/* Builder canvas preview responsive */
+/* ═══════════════════════════════════════
+   RESPONSIVE — MOBILE (max 768px)
+═══════════════════════════════════════ */
+@media(max-width:768px){
+  /* Nav */
+  .nav-links{display:none;}
+  .hamburger{display:flex;}
+  #userArea .user-pill .user-pill-name{display:none;}
+  #userArea .user-pill{padding:6px 10px;}
+  .nav-inner{height:60px;padding:0 16px;gap:10px;}
+  .nav-logo-name{font-size:16px;}
+  .nav-logo-sub{display:none;}
+  .nav-logo-icon{width:38px;height:38px;}
+
+  /* Show mobile bottom nav */
+  .mobile-bottom-nav{display:flex;}
+
+  /* Add bottom padding so content isn't hidden behind bottom nav */
+  body{padding-bottom:62px;}
+
+  /* Hero */
+  .hero{padding:40px 16px 36px;}
+  .hero-inner{grid-template-columns:1fr;gap:24px;}
+  .hero-visual{display:none;}
+  .hero-title{font-size:clamp(30px,8vw,44px);}
+  .hero-sub{font-size:14px;margin-bottom:24px;}
+  .hero-actions{flex-direction:column;gap:10px;}
+  .hero-actions .btn{width:100%;justify-content:center;}
+  .btn-lg{padding:14px 28px;font-size:15px;}
+
+  /* Section header */
+  .section-header{padding:32px 16px 20px;}
+
+  /* Category grid */
+  .cat-grid{grid-template-columns:1fr;padding:0 16px 40px;gap:12px;}
+  .cat-card{padding:24px 20px;}
+  .cat-card-emoji{font-size:40px;margin-bottom:12px;}
+  .cat-card-title{font-size:22px;}
+
+  /* Product grid */
+  .product-grid{grid-template-columns:repeat(2,1fr);gap:12px;padding:0 12px 60px;}
+  .product-card-img{height:150px;}
+  .product-card-body{padding:12px;}
+  .product-card-name{font-size:16px;}
+  .product-card-price{font-size:18px;}
+  .product-card-footer{padding:10px 12px;}
+  .product-card-footer .btn{padding:8px 12px;font-size:12px;}
+
+  /* Cart sidebar */
+  .cart-sidebar{width:100%;border-radius:0;}
+
+  /* Modals */
+  .modal-overlay{padding:0;align-items:flex-end;}
+  .modal{max-width:100%;max-height:92vh;border-radius:16px 16px 0 0;}
+  .modal-body{padding:16px;}
+  .modal-header{padding:16px 18px;}
+  .modal-footer{padding:12px 18px;flex-direction:column;}
+  .modal-footer .btn{width:100%;justify-content:center;}
+
+  /* Product detail modal */
+  .product-img-large{height:200px;margin:-16px -16px 14px;}
+
+  /* Admin layout */
+  .admin-layout{flex-direction:column;}
+  .admin-sidebar{width:100%;min-height:auto;position:sticky;top:60px;height:auto;z-index:150;flex-direction:row;overflow-x:auto;padding:0;}
+  .admin-sidebar-logo{display:none;}
+  .admin-nav{flex-direction:row;padding:0;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .admin-nav-item{padding:12px 16px;font-size:11px;gap:6px;flex-direction:column;min-width:64px;align-items:center;white-space:nowrap;border-bottom:none;border-top:3px solid transparent;}
+  .admin-nav-item.active{border-top-color:var(--rose);color:#fff;background:rgba(255,255,255,.13);}
+  .admin-nav-item .admin-nav-icon-box{width:28px;height:28px;flex-shrink:0;}
+  .admin-nav-item:last-child{margin-top:0;margin-left:auto;}
+  .admin-main{padding:16px 12px;min-width:0;}
+  .admin-section-title{font-size:18px;margin-bottom:16px;}
+  .admin-table-wrap{overflow-x:auto;}
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .stat-card{padding:14px 10px;}
+  .stat-card-val{font-size:24px;}
+
+  /* Builder page */
+  .builder-page{padding:20px 12px 80px;}
+  .builder-steps{gap:0;margin-bottom:20px;}
+  .build-step{font-size:10px;padding:10px 4px;}
+  .builder-options{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .build-opt{padding:12px 8px;}
+  .builder-nav{flex-direction:column;gap:8px;}
+  .builder-nav .btn{width:100%;justify-content:center;}
+
+  /* Builder canvas grid */
+  .builder-page>[style*="grid-template-columns:1fr 1fr"]{
+    grid-template-columns:1fr!important;
+  }
+  #cakeCanvas{width:100%!important;height:auto!important;}
+
+  /* Orders page */
+  .orders-page{padding:20px 12px 80px;}
+  .order-card-header{flex-direction:column;gap:8px;}
+
+  /* Auth */
+  .auth-page{margin:24px auto;padding:0 12px 80px;}
+  .auth-box{padding:24px 16px;}
+
+  /* Category page header */
+  .cat-page-header{padding:32px 16px 20px;}
+  .cat-page-emoji{font-size:44px;}
+  .cat-page-title{font-size:clamp(22px,5vw,32px);}
+
+  /* Why us */
+  .why-us{padding:40px 16px;}
+  .why-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .why-item{padding:16px 10px;}
+  .why-item-icon{font-size:28px;margin-bottom:8px;}
+
+  /* Footer */
+  footer{padding:32px 16px;}
+  footer .footer-logo{font-size:18px;}
+
+  /* WhatsApp float — move up from bottom nav */
+  #waFloat{bottom:74px;right:16px;width:50px;height:50px;}
+
+  /* Payment modal */
+  .pay-method-grid{grid-template-columns:1fr 1fr;}
+  .upi-qr-wrap{flex-direction:column;align-items:center;}
+
+  /* Forms */
+  .product-form-grid{grid-template-columns:1fr;}
+
+  /* Toast */
+  #toastBox{top:70px;left:12px;right:12px;}
+  .toast{max-width:100%;}
+
+  /* Variant opts */
+  .variant-opts{gap:6px;}
+  .variant-opt{padding:8px 12px;font-size:13px;}
+
+  /* Qty row */
+  .qty-btn{width:40px;height:40px;font-size:20px;}
+}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE — SMALL MOBILE (max 480px)
+═══════════════════════════════════════ */
 @media(max-width:480px){
+  .product-grid{grid-template-columns:repeat(2,1fr);gap:8px;padding:0 8px 60px;}
+  .product-card-img{height:130px;}
+  .product-card-img-placeholder{font-size:52px;}
+  .cat-grid{grid-template-columns:1fr;}
   #cakeCanvas{width:100%!important;height:auto!important;}
   .builder-canvas-grid{grid-template-columns:1fr!important;}
   .builder-canvas-grid>div:first-child{border-right:none!important;border-bottom:1px solid var(--cream3);}
+  .admin-nav-item{min-width:52px;padding:10px 8px;font-size:9px;}
+  /* Full-width cart bottom sheet */
+  .cart-sidebar{border-radius:0;}
+}
+
+/* ═══════════════════════════════════════
+   TOUCH IMPROVEMENTS
+═══════════════════════════════════════ */
+@media(hover:none){
+  .product-card:hover{transform:none;box-shadow:none;}
+  .cat-card:hover{transform:none;box-shadow:none;}
+  .hero-card:hover{transform:none;}
+  .btn:active{opacity:.85;transform:scale(.98);}
+  .mbn-item:active{background:var(--cream2);}
+}
+/* Scrollbar thin on mobile */
+@media(max-width:768px){
+  *::-webkit-scrollbar{width:3px;height:3px;}
+  *::-webkit-scrollbar-track{background:transparent;}
+  *::-webkit-scrollbar-thumb{background:var(--cream3);border-radius:3px;}
 }
 </style>
 </head>
@@ -469,7 +677,10 @@ footer p{font-size:13px;line-height:1.8;}
 ═══════════════════════════════════════════════════ -->
 <nav>
   <div class="nav-inner">
-    <div class="nav-logo" onclick="showPage('home')">
+    <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileMenu()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-logo" onclick="showPage('home');closeMobileMenu();">
       <div class="nav-logo-icon" id="navLogoIconWrap"><span style="font-size:22px;position:relative;z-index:1;">&#127874;</span></div>
       <div class="nav-logo-text">
         <div class="nav-logo-name">Chandradeepa</div>
@@ -489,6 +700,44 @@ footer p{font-size:13px;line-height:1.8;}
     </button>
   </div>
 </nav>
+<!-- Mobile menu overlay + drawer -->
+<div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="closeMobileMenu()"></div>
+<div class="mobile-menu-drawer" id="mobileMenuDrawer">
+  <div class="mobile-menu-user hidden" id="mobileMenuUser">
+    <div class="mobile-menu-user-avatar" id="mobileMenuAvatar">?</div>
+    <div>
+      <div class="mobile-menu-user-name" id="mobileMenuName">Guest</div>
+      <div class="mobile-menu-user-email" id="mobileMenuEmail"></div>
+    </div>
+  </div>
+  <div class="mobile-menu-item" onclick="showPage('home');closeMobileMenu();"><span class="mobile-menu-item-icon">&#127968;</span> Home</div>
+  <div class="mobile-menu-item" onclick="showPage('shop');closeMobileMenu();"><span class="mobile-menu-item-icon">&#127874;</span> All Cakes</div>
+  <div class="mobile-menu-item" onclick="showPage('builder');closeMobileMenu();"><span class="mobile-menu-item-icon">&#10024;</span> Build Your Cake</div>
+  <div class="mobile-menu-item" onclick="showPage('orders');closeMobileMenu();"><span class="mobile-menu-item-icon">&#128230;</span> My Orders</div>
+  <div class="mobile-menu-item" id="mobileMenuAuth" onclick="showPage('auth');closeMobileMenu();"><span class="mobile-menu-item-icon">&#128100;</span> Sign In</div>
+  <div class="mobile-menu-item hidden" id="mobileMenuSignout" onclick="signOut_();closeMobileMenu();"><span class="mobile-menu-item-icon">&#128682;</span> Sign Out</div>
+</div>
+<!-- Mobile Bottom Navigation -->
+<div class="mobile-bottom-nav" id="mobileBottomNav">
+  <div class="mobile-bottom-nav-inner">
+    <button class="mbn-item active" id="mbn-home" onclick="showPage('home')">
+      <span class="mbn-icon">&#127968;</span>Home
+    </button>
+    <button class="mbn-item" id="mbn-shop" onclick="showPage('shop')">
+      <span class="mbn-icon">&#127874;</span>Cakes
+    </button>
+    <button class="mbn-item" id="mbn-builder" onclick="showPage('builder')">
+      <span class="mbn-icon">&#10024;</span>Build
+    </button>
+    <button class="mbn-item" id="mbn-orders" onclick="showPage('orders')">
+      <span class="mbn-icon">&#128230;</span>Orders
+    </button>
+    <button class="mbn-item" id="mbn-cart" onclick="toggleCart()">
+      <span class="mbn-icon">&#128722;</span>Cart
+      <span class="mbn-badge" id="mbnCartCount" style="display:none;">0</span>
+    </button>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════════════════
      CART SIDEBAR
@@ -623,7 +872,7 @@ footer p{font-size:13px;line-height:1.8;}
   <div class="builder-page">
 
     <!-- Live Preview + Reference Upload Row -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1.5px solid var(--cream3);margin-bottom:24px;background:#fff;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1.5px solid var(--cream3);margin-bottom:24px;background:#fff;" class="builder-canvas-grid">
       <!-- Live Preview — real photo if admin uploaded, else canvas -->
       <div style="padding:18px;border-right:1px solid var(--cream3);text-align:center;background:linear-gradient(160deg,#fff9f5,#fff);">
         <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;">Your Cake Preview</div>
@@ -1299,15 +1548,71 @@ function _renderPage(name){
   pg.classList.add('active');
   document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
   var nl = document.getElementById('nl-'+name); if(nl) nl.classList.add('active');
+  // Update mobile bottom nav active state
+  ['home','shop','builder','orders'].forEach(function(n){
+    var btn = document.getElementById('mbn-'+n);
+    if(btn){ btn.classList.toggle('active', n===name); }
+  });
   window.scrollTo(0,0);
   if(name==='home'){ renderFeatured(); updateCategoryCounts(); }
   if(name==='shop'){ renderShop(); }
   if(name==='orders'){ renderMyOrders(); }
   if(name==='admin'){ renderAdminDashboard(); renderProductsTable(); renderOrdersTable(); renderCustomersTable(); loadFirestoreOrders(); }
   if(name==='builder'){ renderTierOptions(); renderTierVisual(); renderBuilderFlavours(); setTimeout(function(){ updateBuilderPreview(); },80); }
-
   if(name==='auth'){ goAuthStep(0); clearRecaptcha(); }
 }
+// ════════════════════════════════════════════════════
+// MOBILE MENU
+// ════════════════════════════════════════════════════
+function toggleMobileMenu(){
+  var drawer = document.getElementById('mobileMenuDrawer');
+  var overlay = document.getElementById('mobileMenuOverlay');
+  var btn = document.getElementById('hamburgerBtn');
+  var isOpen = drawer.classList.contains('open');
+  if(isOpen){ closeMobileMenu(); }
+  else {
+    drawer.classList.add('open');
+    overlay.classList.add('open');
+    btn.classList.add('open');
+    document.body.style.overflow='hidden';
+    updateMobileMenuUser();
+  }
+}
+function closeMobileMenu(){
+  var drawer = document.getElementById('mobileMenuDrawer');
+  var overlay = document.getElementById('mobileMenuOverlay');
+  var btn = document.getElementById('hamburgerBtn');
+  drawer.classList.remove('open');
+  overlay.classList.remove('open');
+  if(btn) btn.classList.remove('open');
+  document.body.style.overflow='';
+}
+function updateMobileMenuUser(){
+  var authEl = document.getElementById('mobileMenuAuth');
+  var signoutEl = document.getElementById('mobileMenuSignout');
+  var userEl = document.getElementById('mobileMenuUser');
+  var nameEl = document.getElementById('mobileMenuName');
+  var emailEl = document.getElementById('mobileMenuEmail');
+  var avatarEl = document.getElementById('mobileMenuAvatar');
+  if(state.currentUser){
+    if(userEl){ userEl.classList.remove('hidden'); }
+    if(nameEl) nameEl.textContent = state.currentUser.name||'User';
+    if(emailEl) emailEl.textContent = state.currentUser.email||'';
+    if(avatarEl) avatarEl.textContent = (state.currentUser.name||'U')[0].toUpperCase();
+    if(authEl) authEl.classList.add('hidden');
+    if(signoutEl) signoutEl.classList.remove('hidden');
+  } else {
+    if(userEl) userEl.classList.add('hidden');
+    if(authEl) authEl.classList.remove('hidden');
+    if(signoutEl) signoutEl.classList.add('hidden');
+  }
+}
+function signOut_(){
+  if(state.currentUser && state.currentUser.isAdmin){ logoutAdmin(); }
+  else { logoutUser(); }
+}
+// Sync mobile bottom nav cart badge
+var _origUpdateCartUI = typeof updateCartUI === 'function' ? updateCartUI : null;
 function showPage(name){
   _renderPage(name);
   if(name==='builder'){ _builderNavNoHistory(0); history.pushState({page:'builder',builderStep:0},'','#builder-step0'); }
@@ -1343,6 +1648,7 @@ function updateUserUI(){
       : `<div class="user-avatar">${init}</div>`;
     area.innerHTML = `<div class="user-pill" onclick="logoutUser()">${avatar}${state.currentUser.name.split(' ')[0]} ✕</div>`;
   }
+  if(typeof updateMobileMenuUser === 'function') updateMobileMenuUser();
 }
 function logout(){ logoutUser(); }
 function logoutAdmin(){ stopOrderNotifications(); state.currentUser=null; updateUserUI(); showPage('home'); toast('Logged out'); }
@@ -1580,8 +1886,12 @@ function updateModalPrice(){pmUpdatePrice();}
 function toggleCart(){ document.getElementById('cartSidebar').classList.toggle('open'); document.getElementById('cartOverlay').classList.toggle('open'); }
 function updateCartUI(){
   const total = state.cart.reduce((s,i)=>s+i.price*i.qty,0);
-  document.getElementById('cartCount').textContent = state.cart.reduce((s,i)=>s+i.qty,0);
+  const count = state.cart.reduce((s,i)=>s+i.qty,0);
+  document.getElementById('cartCount').textContent = count;
   document.getElementById('cartTotal').textContent = `₹${total}`;
+  // Sync mobile bottom nav badge
+  var mbnBadge = document.getElementById('mbnCartCount');
+  if(mbnBadge){ mbnBadge.textContent = count; mbnBadge.style.display = count>0 ? 'flex' : 'none'; }
   const el = document.getElementById('cartItems');
   if(state.cart.length===0){ el.innerHTML=`<div class="empty-cart"><div class="empty-cart-icon">🛒</div><div>Your cart is empty</div></div>`; return; }
   el.innerHTML = state.cart.map(item=>{
