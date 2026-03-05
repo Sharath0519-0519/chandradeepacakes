@@ -422,11 +422,17 @@ footer p{font-size:13px;line-height:1.8;}
 @media(max-width:768px){
   .nav-links{display:none;}
   .cat-grid{grid-template-columns:1fr;}
-  .admin-layout{flex-direction:column;}
-  .admin-sidebar{width:100%;padding:12px 0;}
-  .admin-nav{display:flex;overflow-x:auto;}
-  .admin-nav-item{white-space:nowrap;border-left:none;border-bottom:3px solid transparent;}
-  .admin-nav-item.active{border-bottom-color:var(--rose2);}
+  .admin-layout{flex-direction:row;}
+  .admin-sidebar{width:58px;min-width:58px;padding:8px 0;overflow:hidden;position:sticky;top:70px;height:calc(100vh - 70px);}
+  .admin-sidebar-logo{padding:8px 0;display:flex;justify-content:center;}
+  .admin-sidebar-name{display:none;}
+  .admin-sidebar-sub{display:none;}
+  .admin-sidebar-logo-wrap{justify-content:center;}
+  .admin-nav-item{padding:10px 0;justify-content:center;gap:0;font-size:0;}
+  .admin-nav-item .admin-nav-icon-box{width:36px;height:36px;flex-shrink:0;}
+  .admin-main{padding:14px 10px;overflow-x:hidden;min-width:0;flex:1;}
+  .admin-section-title{font-size:17px;}
+  .admin-table-wrap{overflow-x:auto;}
   .cart-sidebar{width:100%;}
 }
 
@@ -1155,7 +1161,7 @@ const ADMIN_PASSWORD = 'Deepa@123';
 // ════════════════════════════════════════════════════
 // RAZORPAY KEY — Paste your Key ID here
 // ════════════════════════════════════════════════════
-const RAZORPAY_KEY_ID = 'rzp_live_SN4XuHOp4GbMFi';
+const RAZORPAY_KEY_ID = 'rzp_test_PASTE_YOUR_KEY_HERE';
 const LOCATIONIQ_KEY = 'pk.5ecb5668cd50cbdae2d911257462201c';
 
 // ════════════════════════════════════════════════════
