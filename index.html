@@ -1558,7 +1558,7 @@ function _renderPage(name){
   if(name==='shop'){ renderShop(); }
   if(name==='orders'){ renderMyOrders(); }
   if(name==='admin'){ renderAdminDashboard(); renderProductsTable(); renderOrdersTable(); renderCustomersTable(); loadFirestoreOrders(); }
-  if(name==='builder'){ renderTierOptions(); renderTierVisual(); renderBuilderFlavours(); setTimeout(function(){ updateBuilderPreview(); },80); }
+  if(name==='builder'){ _initBuilder(); }
   if(name==='auth'){ goAuthStep(0); clearRecaptcha(); }
 }
 // ════════════════════════════════════════════════════
@@ -1615,7 +1615,7 @@ function signOut_(){
 var _origUpdateCartUI = typeof updateCartUI === 'function' ? updateCartUI : null;
 function showPage(name){
   _renderPage(name);
-  if(name==='builder'){ _builderNavNoHistory(0); history.pushState({page:'builder',builderStep:0},'','#builder-step0'); }
+  if(name==='builder'){ history.pushState({page:'builder',builderStep:0},'','#builder-step0'); }
   else { history.pushState({page:name,builderStep:-1},'','#'+name); }
 }
 window.addEventListener('popstate', function(e){
@@ -1998,6 +1998,20 @@ function updateBuilderKgPrice(){
   if(builderStepNum===3) renderBuilderSummary();
 }
 
+function _initBuilder(){
+  // Reset to step 0
+  builderStepNum = 0;
+  // Render options first (synchronous)
+  renderTierOptions();
+  renderBuilderFlavours();
+  // Show correct panels and step indicators
+  document.querySelectorAll('.builder-panel').forEach(function(p,i){ p.classList.toggle('active', i===0); });
+  document.querySelectorAll('.build-step').forEach(function(s,i){ s.classList.remove('active','done'); if(i===0) s.classList.add('active'); });
+  // Update size panel and preview immediately — no setTimeout needed
+  updateSizePanel();
+  renderTierVisual();
+  updateBuilderPreview();
+}
 function _builderNavNoHistory(step){
   document.querySelectorAll('.builder-panel').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.build-step').forEach(function(s,i){ s.classList.remove('active','done'); if(i<step) s.classList.add('done'); if(i===step) s.classList.add('active'); });
@@ -3827,13 +3841,11 @@ renderFeatured();
 updateCategoryCounts();
 updateUserUI();
 updateCartUI();
-renderTierVisual();
-renderTierOptions();
-renderBuilderFlavours();
 updateCategoryDropdown();
-setTimeout(function(){ updateBuilderPreview(); },100);
 loadLogoSettings();
 loadContactSettings();
+// Initialise builder once cleanly (no setTimeout race)
+_initBuilder();
 // Load from Firestore when ready
 function _initFirestoreData(){
   if(window._fb){
