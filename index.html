@@ -31,7 +31,9 @@ const db   = getFirestore(app);
 window._fb = { auth, db, GoogleAuthProvider, signInWithPopup, signOut,
   collection, doc, setDoc, getDoc, getDocs, addDoc, query, orderBy, updateDoc, deleteDoc };
 
-window.dispatchEvent(new Event('fbReady'));
+// Notify main script that Firebase is ready
+// Use a small delay to ensure main script has loaded
+setTimeout(function(){ window.dispatchEvent(new Event('fbReady')); }, 100);
 auth.onAuthStateChanged(function(user){
   if(typeof state==='undefined') return;
   if(user&&!state.currentUser){state.currentUser={name:user.displayName||user.email,email:user.email,photo:user.photoURL||'',isAdmin:false};if(typeof updateUserUI==='function')updateUserUI();}
@@ -2868,8 +2870,16 @@ async function loadFirestoreProducts(){
     if(!snap.empty){
       state.products=snap.docs.map(d=>({...d.data(),_docId:d.id}));
       saveProducts(); renderFeatured(); renderShop(); updateCategoryCounts(); renderAdminDashboard();
+      console.log('✅ Loaded '+state.products.length+' products from Firestore');
+    } else {
+      console.log('ℹ️ No products in Firestore yet');
     }
-  } catch(e){ console.warn('Firestore products error:',e); }
+  } catch(e){ 
+    console.warn('Firestore products error:',e.code, e.message);
+    if(e.code==='permission-denied'){
+      console.warn('⚠️ FIRESTORE RULES BLOCKING READ — go to Firebase Console → Firestore → Rules and set allow read: if true;');
+    }
+  }
 }
 
 async function saveProductToFirestore(product){
@@ -3413,6 +3423,13 @@ setTimeout(function(){ updateBuilderPreview(); },100);
 loadLogoSettings();
 loadContactSettings();
 // Settings loaded via fbReady event above
+// Fallback: if fbReady already fired before this script loaded, call init now
+if(window._fb){
+  setTimeout(function(){ 
+    loadFirestoreProducts();
+    loadAllSettings();
+  }, 200);
+}
 // goAuthStep(0); // removed — using Google Sign-In now
 </script>
 
