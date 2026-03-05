@@ -1989,7 +1989,10 @@ function orderRow(o, actions){
       const refHtml = i.refImg && i.refImg.length>10 ? `<br><img src="${i.refImg}" style="width:40px;height:32px;object-fit:cover;vertical-align:middle;border-radius:3px;margin-top:3px;" title="Customer reference photo">` : '';
       return imgHtml+`×${i.qty}`+refHtml;
     }).join('<br>')}</td>
-    <td><strong>₹${o.total}</strong></td>
+    <td><strong>₹${o.total}</strong><br><small style="color:var(--text3)">📅 ${o.deliveryDate||'—'}</small><br>
+      <small style="color:var(--text3);font-size:10px;">${o.address||''}</small><br>
+      ${o.mapsLink ? `<a href="${o.mapsLink}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;background:#25D366;color:#fff;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;text-decoration:none;">📍 Open in Maps</a>` : ''}
+    </td>
     <td><span class="status-badge ${sc}">${o.status}</span></td>
     <td>${o.date}</td>
     ${actions?`<td><select onchange="updateOrderStatus('${o.id}',this.value)" style="padding:5px 8px;font-size:12px;border:1px solid var(--cream3);">${opts}</select></td>`:''}
@@ -2860,14 +2863,22 @@ async function finaliseOrder(payMethod){
   const deliveryCharge=payState.deliveryCharge||0;
   const total=subtotal+deliveryCharge;
   const orderId='CS'+Date.now().toString().slice(-6);
+  // Save GPS coordinates if available
+  const lat = _addrSelectedLat || null;
+  const lng = _addrSelectedLng || null;
+  const mapsLink = (lat && lng) ? 'https://maps.google.com/?q='+lat+','+lng : null;
   const order={
     id:orderId, customer:{name,phone,email:state.currentUser?.email||''},
-    items:[...state.cart], subtotal, deliveryCharge, total, address, deliveryDate:date, note,
+    items:[...state.cart], subtotal, deliveryCharge, total, address,
+    lat, lng, mapsLink,
+    deliveryDate:date, note,
     paymentMethod:payMethod, paymentStatus:payMethod.startsWith('Cash')?'Pay on Delivery':'Paid',
     status:'Confirmed', date:new Date().toLocaleDateString(), timestamp:Date.now()
   };
   if(window._fb){ try{ await window._fb.addDoc(window._fb.collection(window._fb.db,'orders'),order); }catch(e){ console.error(e); } }
   state.orders.unshift(order); saveOrders();
+  // Send WhatsApp notification to admin
+  sendOrderWhatsApp(order);
   // Remember phone for next time
   if(phone && state.currentUser?.email) saveLS('cs_phone_'+state.currentUser.email, phone);
   state.cart=[]; saveCart(); updateCartUI();
@@ -2877,6 +2888,34 @@ async function finaliseOrder(payMethod){
   document.getElementById('successOrderId').textContent='#'+orderId;
   document.getElementById('successPayMethod').textContent=payMethod;
   document.getElementById('successAmount').textContent='₹'+total;
+}
+
+function sendOrderWhatsApp(order){
+  try {
+    const adminPhone = '919880305874'; // Admin WhatsApp number (no + or spaces)
+    const items = order.items.map(i=>i.emoji+' '+i.name+' x'+i.qty+' = ₹'+(i.price*i.qty)).join('%0A');
+    const locationLine = order.mapsLink 
+      ? '%0A📍 Location: '+encodeURIComponent(order.mapsLink)
+      : '%0A📍 Address: '+encodeURIComponent(order.address||'Not provided');
+    const msg = 
+      '🎂 *NEW ORDER #'+order.id+'*%0A'
+      +'━━━━━━━━━━━━━━━━━%0A'
+      +'👤 *Customer:* '+encodeURIComponent(order.customer.name)+'%0A'
+      +'📞 *Phone:* '+encodeURIComponent(order.customer.phone)+'%0A'
+      +'📦 *Items:*%0A'+items+'%0A'
+      +'━━━━━━━━━━━━━━━━━%0A'
+      +'💰 *Subtotal:* ₹'+order.subtotal+'%0A'
+      +(order.deliveryCharge>0?'🚚 *Delivery:* ₹'+order.deliveryCharge+'%0A':'')
+      +'💵 *Total:* ₹'+order.total+'%0A'
+      +'💳 *Payment:* '+encodeURIComponent(order.paymentMethod)+'%0A'
+      +'📅 *Delivery Date:* '+encodeURIComponent(order.deliveryDate)+'%0A'
+      +locationLine
+      +(order.note?'%0A📝 *Note:* '+encodeURIComponent(order.note):'')
+      +'%0A━━━━━━━━━━━━━━━━━%0A'
+      +'✅ Reply to confirm order!';
+    // Open WhatsApp with pre-filled message to admin
+    window.open('https://wa.me/'+adminPhone+'?text='+msg, '_blank');
+  } catch(e){ console.warn('WhatsApp notify error:', e); }
 }
 
 // ════════════════════════════════════════════════════
