@@ -31,9 +31,15 @@ const db   = getFirestore(app);
 window._fb = { auth, db, GoogleAuthProvider, signInWithPopup, signOut,
   collection, doc, setDoc, getDoc, getDocs, addDoc, query, orderBy, updateDoc, deleteDoc };
 
-// Notify main script that Firebase is ready
-// Use a small delay to ensure main script has loaded
-setTimeout(function(){ window.dispatchEvent(new Event('fbReady')); }, 100);
+// Notify main script Firebase is ready — poll until main JS functions exist
+function _firebaseReadyPoll(){
+  if(typeof loadFirestoreProducts === 'function'){
+    window.dispatchEvent(new Event('fbReady'));
+  } else {
+    setTimeout(_firebaseReadyPoll, 50);
+  }
+}
+setTimeout(_firebaseReadyPoll, 50);
 auth.onAuthStateChanged(function(user){
   if(typeof state==='undefined') return;
   if(user&&!state.currentUser){state.currentUser={name:user.displayName||user.email,email:user.email,photo:user.photoURL||'',isAdmin:false};if(typeof updateUserUI==='function')updateUserUI();}
@@ -2379,19 +2385,26 @@ async function saveProduct(){
     if(idx>=0) state.products[idx] = product;
   } else { state.products.push(product); }
   
-  // Save to Firestore and get back the docId
-  toast('⏳ Saving cake...');
-  await saveProductToFirestore(product);
+  // Save to Firestore
+  toast('⏳ Saving "' + name + '" to cloud...');
+  var saved = await saveProductToFirestore(product);
   
-  // IMPORTANT: update state.products with the new _docId from Firestore
-  const stateIdx = state.products.findIndex(p=>Number(p.id)===Number(product.id));
+  if(!saved){
+    // Firestore failed - remove from local state too so user knows
+    toast('❌ Failed to save to cloud. Please try again.');
+    state.products = state.products.filter(p=>Number(p.id)!==Number(product.id));
+    return;
+  }
+  
+  // Sync _docId back to state
+  var stateIdx = state.products.findIndex(p=>Number(p.id)===Number(product.id));
   if(stateIdx>=0) state.products[stateIdx]._docId = product._docId;
   
-  saveProducts();
-  renderProductsTable(); renderAdminDashboard(); updateCategoryCounts();
-  renderFeatured(); renderShop();
+  // Reload from Firestore to confirm it's there
+  await loadFirestoreProducts();
+  
   closeModal('adminProductModal');
-  toast(`✅ "${name}" saved! Customers can now see it.`);
+  toast('✅ "' + name + '" saved! Visible to all customers now.');
 }
 
 async function deleteProduct(id){
@@ -2897,23 +2910,33 @@ async function loadFirestoreProducts(){
 }
 
 async function saveProductToFirestore(product){
-  if(!window._fb){ toast('⚠️ Firebase not ready, saved locally only'); return; }
+  if(!window._fb){ toast('⚠️ Firebase not ready'); return false; }
   try {
-    // Remove _docId from the data we store in Firestore (it's stored as the document ID)
-    const dataToSave = Object.assign({}, product);
-    delete dataToSave._docId;
+    // Clean copy without _docId for Firestore storage
+    const dataToSave = {};
+    for(var k in product){ if(k !== '_docId') dataToSave[k] = product[k]; }
     
     if(product._docId){
-      await window._fb.setDoc(window._fb.doc(window._fb.db,'products',product._docId), dataToSave);
-      console.log('✅ Product updated in Firestore:', product._docId);
+      // Update existing document
+      await window._fb.setDoc(
+        window._fb.doc(window._fb.db, 'products', product._docId), 
+        dataToSave
+      );
+      console.log('✅ Updated product in Firestore:', product.name, product._docId);
     } else {
-      const ref = await window._fb.addDoc(window._fb.collection(window._fb.db,'products'), dataToSave);
+      // Create new document
+      var ref = await window._fb.addDoc(
+        window._fb.collection(window._fb.db, 'products'), 
+        dataToSave
+      );
       product._docId = ref.id;
-      console.log('✅ Product added to Firestore with ID:', ref.id);
+      console.log('✅ Created product in Firestore:', product.name, ref.id);
     }
+    return true;
   } catch(e){ 
-    console.error('❌ Firestore product save error:', e.code, e.message);
-    toast('⚠️ Cloud save failed: ' + e.message + '. Saved locally only.');
+    console.error('❌ Firestore save error:', e.code, e.message);
+    toast('❌ Save failed: ' + (e.code||e.message) + '. Check internet connection.');
+    return false;
   }
 }
 
@@ -2924,11 +2947,7 @@ async function updateOrderStatus(id, status){
   toast('Order #'+id+' → '+status);
 }
 
-window.addEventListener('fbReady',()=>{ 
-  loadFirestoreProducts();
-  // Also load all settings from Firestore
-  setTimeout(function(){ loadAllSettings(); }, 300);
-});
+// fbReady event handled by _firebaseReadyPoll in module script above
 
 // ════════════════════════════════════════════════════
 // SETTINGS FUNCTIONS
@@ -3446,14 +3465,17 @@ updateCategoryDropdown();
 setTimeout(function(){ updateBuilderPreview(); },100);
 loadLogoSettings();
 loadContactSettings();
-// Settings loaded via fbReady event above
-// Fallback: if fbReady already fired before this script loaded, call init now
-if(window._fb){
-  setTimeout(function(){ 
+// Load from Firestore when ready
+function _initFirestoreData(){
+  if(window._fb){
     loadFirestoreProducts();
-    loadAllSettings();
-  }, 200);
+    setTimeout(loadAllSettings, 300);
+  } else {
+    // Firebase not ready yet, retry
+    setTimeout(_initFirestoreData, 100);
+  }
 }
+_initFirestoreData();
 // goAuthStep(0); // removed — using Google Sign-In now
 </script>
 
