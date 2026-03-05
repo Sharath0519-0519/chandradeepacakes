@@ -2602,40 +2602,19 @@ function addrFetchSuggestions(q){
   dropdown.innerHTML = '<div style="padding:12px 16px;font-size:13px;color:var(--text3);">⏳ Searching…</div>';
   dropdown.style.display = 'block';
 
-  // Always bias towards Mangalore — search with "Mangalore" appended first
-  var qMang = q.toLowerCase().includes('mangalore') ? q : q + ' Mangalore';
-  var url = 'https://api.locationiq.com/v1/autocomplete?'
-    + 'key=' + LOCATIONIQ_KEY
-    + '&q=' + encodeURIComponent(qMang)
-    + '&limit=8&countrycodes=in'
-    + '&lat=12.8697&lon=74.8432'
-    + '&zoom=14'
-    + '&dedupe=1&normalizecity=1&accept-language=en';
-  // Also run plain search in parallel for broader results
-  var urlPlain = 'https://api.locationiq.com/v1/autocomplete?'
-    + 'key=' + LOCATIONIQ_KEY
-    + '&q=' + encodeURIComponent(q)
-    + '&limit=5&countrycodes=in'
-    + '&lat=12.8697&lon=74.8432'
-    + '&zoom=14'
-    + '&dedupe=1&normalizecity=1&accept-language=en';
-
   var MANG_LAT=12.8697, MANG_LNG=74.8432;
+  // Use OpenStreetMap Nominatim — completely free, no API key needed
+  var qMang = q.toLowerCase().includes('mangalore') || q.toLowerCase().includes('mangaluru') ? q : q + ' Mangalore Karnataka';
+  var url = 'https://nominatim.openstreetmap.org/search?'
+    + 'q=' + encodeURIComponent(qMang)
+    + '&format=json&addressdetails=1&limit=8&countrycodes=in'
+    + '&viewbox=74.7,12.7,75.1,13.1&bounded=0'
+    + '&accept-language=en';
 
-  function fetchJSON(u){ return fetch(u).then(function(r){return r.json();}).catch(function(){return [];}); }
-
-  Promise.all([fetchJSON(url), fetchJSON(urlPlain)]).then(function(allRes){
-    // Merge results, deduplicate by display_name
-    var seen = {};
-    var combined = [];
-    (allRes[0].concat(allRes[1]||[])).forEach(function(r){
-      if(r && !r.error && !seen[r.display_name]){
-        seen[r.display_name] = true;
-        combined.push(r);
-      }
-    });
-    var results = combined;
-
+  fetch(url, {headers:{'Accept':'application/json','User-Agent':'ChandradeepaCakes/1.0'}})
+  .then(function(r){ return r.json(); })
+  .catch(function(){ return []; })
+  .then(function(results){
     if(!results || results.length===0){
       dropdown.innerHTML = '<div style="padding:16px;font-size:13px;color:var(--text3);text-align:center;"><div style="font-size:22px;">🔍</div><strong>No results.</strong><br><span style="font-size:12px;">Try e.g. "Vijayanagara Mangalore"</span></div>';
       return;
@@ -2787,7 +2766,7 @@ function detectDeliveryLocation(){
   navigator.geolocation.getCurrentPosition(function(pos){
     var lat = pos.coords.latitude, lng = pos.coords.longitude;
     // Reverse geocode to get human-readable address
-    fetch('https://us1.locationiq.com/v1/reverse?key='+LOCATIONIQ_KEY+'&lat='+lat+'&lon='+lng+'&format=json&accept-language=en')
+    fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lng+'&format=json&accept-language=en', {headers:{'User-Agent':'ChandradeepaCakes/1.0'}})
       .then(function(r){ return r.json(); })
       .then(function(data){
         var displayName = data.display_name || (lat.toFixed(5)+', '+lng.toFixed(5));
