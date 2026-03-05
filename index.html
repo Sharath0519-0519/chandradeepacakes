@@ -2378,12 +2378,20 @@ async function saveProduct(){
     const idx = state.products.findIndex(p=>Number(p.id)===Number(id));
     if(idx>=0) state.products[idx] = product;
   } else { state.products.push(product); }
+  
+  // Save to Firestore and get back the docId
+  toast('⏳ Saving cake...');
   await saveProductToFirestore(product);
+  
+  // IMPORTANT: update state.products with the new _docId from Firestore
+  const stateIdx = state.products.findIndex(p=>Number(p.id)===Number(product.id));
+  if(stateIdx>=0) state.products[stateIdx]._docId = product._docId;
+  
   saveProducts();
   renderProductsTable(); renderAdminDashboard(); updateCategoryCounts();
   renderFeatured(); renderShop();
   closeModal('adminProductModal');
-  toast(`✅ "${name}" saved successfully!`);
+  toast(`✅ "${name}" saved! Customers can now see it.`);
 }
 
 async function deleteProduct(id){
@@ -2868,29 +2876,45 @@ async function loadFirestoreProducts(){
   try {
     const snap=await window._fb.getDocs(window._fb.collection(window._fb.db,'products'));
     if(!snap.empty){
-      state.products=snap.docs.map(d=>({...d.data(),_docId:d.id}));
-      saveProducts(); renderFeatured(); renderShop(); updateCategoryCounts(); renderAdminDashboard();
+      // Map Firestore docs — docId is the Firebase document ID
+      state.products=snap.docs.map(d=>{
+        const data = d.data();
+        return {...data, _docId: d.id};
+      });
+      saveProducts(); 
+      renderFeatured(); renderShop(); updateCategoryCounts(); renderAdminDashboard();
       console.log('✅ Loaded '+state.products.length+' products from Firestore');
     } else {
-      console.log('ℹ️ No products in Firestore yet');
+      console.log('ℹ️ No products in Firestore yet - using default products');
     }
   } catch(e){ 
-    console.warn('Firestore products error:',e.code, e.message);
+    console.warn('Firestore products error:', e.code, e.message);
     if(e.code==='permission-denied'){
-      console.warn('⚠️ FIRESTORE RULES BLOCKING READ — go to Firebase Console → Firestore → Rules and set allow read: if true;');
+      console.warn('⚠️ FIRESTORE RULES BLOCKING READ');
+      toast('⚠️ Could not load products from cloud');
     }
   }
 }
 
 async function saveProductToFirestore(product){
-  if(!window._fb) return;
+  if(!window._fb){ toast('⚠️ Firebase not ready, saved locally only'); return; }
   try {
-    if(product._docId) await window._fb.setDoc(window._fb.doc(window._fb.db,'products',product._docId),product);
-    else {
-      const ref=await window._fb.addDoc(window._fb.collection(window._fb.db,'products'),product);
-      product._docId=ref.id;
+    // Remove _docId from the data we store in Firestore (it's stored as the document ID)
+    const dataToSave = Object.assign({}, product);
+    delete dataToSave._docId;
+    
+    if(product._docId){
+      await window._fb.setDoc(window._fb.doc(window._fb.db,'products',product._docId), dataToSave);
+      console.log('✅ Product updated in Firestore:', product._docId);
+    } else {
+      const ref = await window._fb.addDoc(window._fb.collection(window._fb.db,'products'), dataToSave);
+      product._docId = ref.id;
+      console.log('✅ Product added to Firestore with ID:', ref.id);
     }
-  } catch(e){ console.warn('Firestore product save error:',e); }
+  } catch(e){ 
+    console.error('❌ Firestore product save error:', e.code, e.message);
+    toast('⚠️ Cloud save failed: ' + e.message + '. Saved locally only.');
+  }
 }
 
 async function updateOrderStatus(id, status){
